@@ -1,0 +1,321 @@
+# Modul Pembelajaran React.js - Hari ke-2
+
+## Topik Harian: JSX dan Rendering Elements
+
+Pada hari kedua ini, kita akan mendalami lebih lanjut tentang JSX dan bagaimana React menggunakan JSX untuk me-*render* elemen ke DOM.
+
+## Kompetensi:
+
+*   Memahami sintaks JSX secara lengkap.
+*   Mampu me-*render* elemen React ke DOM.
+*   Memahami cara menyematkan ekspresi JavaScript dalam JSX.
+*   Memahami bahwa JSX adalah ekspresi.
+*   Mampu melakukan *conditional rendering* dasar.
+*   Mampu me-*render* daftar (*lists*) sederhana.
+
+## Materi Pembelajaran:
+
+### 1. JSX Syntax Lengkap (className, htmlFor, dll.)
+
+Pada modul sebelumnya, kita sudah membahas dasar-dasar JSX. Sekarang, mari kita lihat beberapa atribut penting lainnya yang sering digunakan di JSX dan perbedaannya dengan HTML.
+
+*   **`className`**: Di HTML, kita menggunakan atribut `class` untuk menambahkan kelas CSS. Namun, di JSX, karena `class` adalah *keyword* yang dilindungi di JavaScript, kita menggunakan `className` sebagai gantinya.
+    ```jsx
+    // HTML
+    // <div class="container"></div>
+
+    // JSX
+    <div className="container">Hello World</div>
+    ```
+
+*   **`htmlFor`**: Mirip dengan `class`, atribut `for` di HTML yang digunakan untuk mengaitkan label dengan elemen input juga merupakan *keyword* yang dilindungi di JavaScript. Di JSX, kita menggunakan `htmlFor`.
+    ```jsx
+    // HTML
+    // <label for="username">Username:</label>
+    // <input type="text" id="username" />
+
+    // JSX
+    <label htmlFor="username">Username:</label>
+    <input type="text" id="username" />
+    ```
+
+*   **Atribut *CamelCase***: Sebagian besar atribut HTML yang terdiri dari dua kata atau lebih akan ditulis dalam *camelCase* di JSX.
+    Contoh: `tabindex` menjadi `tabIndex`, `readonly` menjadi `readOnly`.
+    ```jsx
+    <input type="text" readOnly={true} tabIndex="1" />
+    ```
+
+*   **Atribut Boolean**: Atribut boolean di HTML seperti `disabled`, `checked`, `selected` dapat ditulis hanya dengan nama atributnya. Di JSX, Anda bisa menulisnya sebagai `disabled` atau `disabled={true}`. Untuk `false`, Anda harus menulis `disabled={false}`.
+    ```jsx
+    <button disabled>Tombol Dinonaktifkan</button>
+    <input type="checkbox" checked={true} />
+    ```
+
+*   **Inline Styles**: Untuk *inline styles* di JSX, Anda perlu meneruskan objek JavaScript. Properti CSS yang biasanya ditulis dengan tanda hubung (misalnya `background-color`) harus ditulis dalam *camelCase* (misalnya `backgroundColor`).
+    ```jsx
+    const myStyle = {
+      color: 'blue',
+      backgroundColor: 'lightgray',
+      padding: '10px'
+    };
+
+    <div style={myStyle}>Ini adalah div dengan inline style.</div>
+    // Atau langsung
+    <p style={{ color: 'red', fontSize: '16px' }}>Teks Merah</p>
+    ```
+
+### 2. Embedding Expressions dalam JSX
+
+Seperti yang sudah disinggung sebelumnya, Anda dapat menyematkan ekspresi JavaScript di dalam JSX menggunakan kurung kurawal `{}`. Ini memungkinkan Anda untuk menampilkan data dinamis, memanggil fungsi, atau melakukan operasi JavaScript lainnya langsung di dalam *markup* Anda.
+
+*   **Menampilkan Variabel**:
+    ```jsx
+    const userName = "Alice";
+    const greeting = <h1>Hello, {userName}!</h1>;
+    ```
+
+*   **Melakukan Operasi Matematika**:
+    ```jsx
+    const num1 = 10;
+    const num2 = 5;
+    const result = <p>Hasil penjumlahan: {num1 + num2}</p>;
+    ```
+
+*   **Memanggil Fungsi**:
+    ```jsx
+    function formatName(user) {
+      return user.firstName + ' ' + user.lastName;
+    }
+
+    const user = { firstName: 'John', lastName: 'Doe' };
+    const welcomeMessage = <p>Selamat datang, {formatName(user)}!</p>;
+    ```
+
+*   **Menggunakan Objek**:
+    ```jsx
+    const person = { name: 'Bob', age: 30 };
+    const personInfo = <p>Nama: {person.name}, Usia: {person.age}</p>;
+    ```
+
+**Penting**: Anda hanya bisa menyematkan *ekspresi* JavaScript di dalam `{}`. Anda tidak bisa menyematkan *pernyataan* (seperti `if` *statement* atau `for` *loop*) secara langsung.
+
+### 3. JSX sebagai Expressions
+
+Salah satu konsep penting dalam React adalah bahwa JSX itu sendiri adalah sebuah ekspresi JavaScript. Ini berarti Anda bisa:
+
+*   **Menyimpan JSX dalam Variabel**:
+    ```jsx
+    const welcomeText = <p>Selamat datang di aplikasi saya!</p>;
+    // ... kemudian gunakan welcomeText di tempat lain
+    function App() {
+      return (
+        <div>
+          {welcomeText}
+          <button>Mulai</button>
+        </div>
+      );
+    }
+    ```
+
+*   **Meneruskan JSX sebagai Argumen Fungsi**:
+    ```jsx
+    function Wrapper(props) {
+      return (
+        <div style={{ border: '1px solid black', padding: '10px' }}>
+          {props.children}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Wrapper>
+          <h1>Ini adalah konten di dalam Wrapper</h1>
+          <p>Konten ini diteruskan sebagai children.</p>
+        </Wrapper>
+      );
+    }
+    ```
+
+*   **Mengembalikan JSX dari Fungsi**:
+    ```jsx
+    function getGreeting(isLoggedIn) {
+      if (isLoggedIn) {
+        return <h1>Selamat datang kembali!</h1>;
+      } else {
+        return <h1>Silakan masuk.</h1>;
+      }
+    }
+
+    function App() {
+      const isLoggedIn = true;
+      return (
+        <div>
+          {getGreeting(isLoggedIn)}
+        </div>
+      );
+    }
+    ```
+
+*   **Menggunakannya dalam *Conditional* atau *Loop*** (dengan batasan tertentu, akan dibahas lebih lanjut).
+
+Karena JSX adalah ekspresi, Anda dapat menggunakannya di mana pun Anda dapat menggunakan ekspresi JavaScript lainnya. Ini memberikan fleksibilitas yang luar biasa dalam membangun UI yang dinamis.
+
+### 4. Conditional Rendering Dasar
+
+*Conditional rendering* adalah kemampuan untuk me-*render* elemen atau komponen yang berbeda berdasarkan kondisi tertentu. Ini adalah fitur yang sangat umum dan penting dalam pengembangan aplikasi React.
+
+#### a. Menggunakan `if` Statement (di luar JSX)
+Anda dapat menggunakan `if` *statement* di luar *return* dari komponen untuk menentukan apa yang akan di-*render*.
+```jsx
+function UserGreeting(props) {
+  return <h1>Selamat datang kembali!</h1>;
+}
+
+function GuestGreeting(props) {
+  return <h1>Silakan masuk.</h1>;
+}
+
+function Greeting(props) {
+  const isLoggedIn = props.isLoggedIn;
+  if (isLoggedIn) {
+    return <UserGreeting />;
+  }
+  return <GuestGreeting />;
+}
+
+function App() {
+  return (
+    <div>
+      <Greeting isLoggedIn={true} />
+      <Greeting isLoggedIn={false} />
+    </div>
+  );
+}
+```
+
+#### b. Menggunakan Operator Ternary (`condition ? true : false`)
+Ini adalah cara yang ringkas untuk melakukan *conditional rendering* di dalam JSX.
+```jsx
+function App() {
+  const isLoggedIn = true;
+  return (
+    <div>
+      {isLoggedIn ? (
+        <h1>Selamat datang kembali!</h1>
+      ) : (
+        <h1>Silakan masuk.</h1>
+      )}
+    </div>
+  );
+}
+```
+
+#### c. Menggunakan Operator Logika `&&` (AND)
+Jika Anda ingin me-*render* sesuatu hanya jika kondisi tertentu benar, Anda bisa menggunakan operator `&&`. Jika kondisi pertama benar, ekspresi setelah `&&` akan di-*render*. Jika salah, tidak ada yang di-*render*.
+```jsx
+function Mailbox(props) {
+  const unreadMessages = props.unreadMessages;
+  return (
+    <div>
+      <h1>Hello!</h1>
+      {unreadMessages.length > 0 &&
+        <h2>
+          Anda memiliki {unreadMessages.length} pesan belum dibaca.
+        </h2>
+      }
+    </div>
+  );
+}
+
+function App() {
+  const messages = ['React', 'Re: React', 'Re:Re: React'];
+  return (
+    <div>
+      <Mailbox unreadMessages={messages} />
+      <Mailbox unreadMessages={[]} />
+    </div>
+  );
+}
+```
+
+### 5. Rendering Lists Sederhana
+
+Me-*render* daftar elemen adalah tugas umum lainnya di React. Anda dapat menggunakan fungsi `map()` pada *array* JavaScript untuk membuat daftar elemen JSX.
+
+**Penting**: Saat me-*render* daftar, setiap elemen dalam daftar harus memiliki *prop* `key` yang unik. `key` membantu React mengidentifikasi item mana yang telah berubah, ditambahkan, atau dihapus. Ini sangat penting untuk performa dan stabilitas UI.
+
+```jsx
+function App() {
+  const numbers = [1, 2, 3, 4, 5];
+
+  // Menggunakan map untuk membuat daftar elemen <li>
+  const listItems = numbers.map((number) =>
+    <li key={number.toString()}>
+      {number}
+    </li>
+  );
+
+  return (
+    <div>
+      <h1>Daftar Angka</h1>
+      <ul>{listItems}</ul>
+    </div>
+  );
+}
+```
+
+**Contoh dengan Daftar Objek:**
+```jsx
+function App() {
+  const products = [
+    { id: 1, name: 'Laptop', price: 1200 },
+    { id: 2, name: 'Mouse', price: 25 },
+    { id: 3, name: 'Keyboard', price: 75 }
+  ];
+
+  return (
+    <div>
+      <h1>Daftar Produk</h1>
+      <ul>
+        {products.map((product) => (
+          <li key={product.id}>
+            {product.name} - ${product.price}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Aturan `key`:**
+*   `key` harus unik di antara *sibling* (elemen pada level yang sama).
+*   Jangan gunakan indeks *array* sebagai `key` jika urutan item dapat berubah, item dapat ditambahkan/dihapus, atau daftar dapat diurutkan. Gunakan ID unik dari data Anda jika tersedia.
+
+Dengan memahami konsep-konsep ini, Anda akan memiliki dasar yang kuat untuk mulai membangun UI yang dinamis dan interaktif dengan React.
+
+---
+
+## Tugas Harian
+
+Berikut adalah tugas yang harus dikerjakan oleh santri pada hari kedua:
+
+1. **Membuat Komponen dengan JSX Kompleks**
+   - Buatlah sebuah komponen React bernama `ProfileCard` yang menampilkan nama, foto, bio, dan daftar keahlian (skills) dari props.
+   - Gunakan struktur JSX yang bersarang dan styling sederhana (inline style atau CSS).
+
+2. **Menggunakan JavaScript Expressions dalam JSX**
+   - Buatlah komponen yang menampilkan hasil operasi matematika, pemanggilan fungsi, atau manipulasi string di dalam JSX.
+   - Contoh: menampilkan harga setelah diskon, atau menyapa user dengan nama yang diambil dari variabel.
+
+3. **Membuat Conditional Rendering Sederhana**
+   - Buatlah komponen yang menampilkan pesan berbeda berdasarkan kondisi tertentu (misal: status login, jumlah pesan, dsb) menggunakan operator ternary (`? :`) atau logical AND (`&&`).
+
+4. **Merender Array Data sebagai List**
+   - Buatlah komponen yang menerima array data (misal: daftar buah, produk, atau angka) dan merendernya sebagai list di JSX menggunakan fungsi `map()`.
+   - Pastikan setiap elemen list memiliki prop `key` yang unik.
+
+> **Catatan:**
+> - Tugas dikerjakan secara individu dan dikumpulkan dalam bentuk file markdown atau dokumen digital.
+> - Sertakan hasil kode (screenshot atau link repository) pada setiap tugas yang membutuhkan implementasi React.

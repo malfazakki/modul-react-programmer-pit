@@ -1,0 +1,422 @@
+# Modul Pembelajaran React.js - Hari ke-3
+
+## Topik Harian: Components dan Props
+
+Pada hari ketiga ini, kita akan fokus pada inti dari React: **Components** dan **Props**. Memahami kedua konsep ini sangat fundamental untuk membangun aplikasi React yang terstruktur dan dapat diskalakan.
+
+## Kompetensi:
+
+*   Memahami *Component Building Blocks* pada React.
+*   Mampu membuat *Reusable Functional Component*.
+*   Memahami dan menggunakan *Component Props*.
+
+## Materi Pembelajaran:
+
+### 1. Functional Components
+
+Di React, komponen adalah "blok bangunan" yang memungkinkan Anda membagi UI menjadi bagian-bagian yang independen dan dapat digunakan kembali. Ada dua jenis komponen utama: *Class Components* dan *Functional Components*. Saat ini, *Functional Components* dengan *Hooks* adalah pendekatan yang direkomendasikan dan paling banyak digunakan.
+
+*Functional Components* adalah fungsi JavaScript biasa yang menerima objek `props` sebagai argumen dan mengembalikan elemen React (JSX).
+
+**Contoh Functional Component Sederhana:**
+
+```jsx
+// Greeting.js
+import React from 'react';
+
+function Greeting() {
+  return <h1>Halo, Dunia!</h1>;
+}
+
+export default Greeting;
+```
+
+**Cara Menggunakan Functional Component:**
+
+```jsx
+// App.js
+import React from 'react';
+import Greeting from './Greeting'; // Import komponen yang telah dibuat
+
+function App() {
+  return (
+    <div>
+      <Greeting /> {/* Menggunakan komponen seperti tag HTML */}
+      <p>Ini adalah aplikasi React pertama saya.</p>
+    </div>
+  );
+}
+
+export default App;
+```
+
+**Kelebihan Functional Components:**
+*   **Lebih Sederhana dan Ringkas**: Kode yang ditulis cenderung lebih sedikit dan lebih mudah dibaca.
+*   **Mudah Diuji**: Karena mereka adalah fungsi murni (jika tidak menggunakan *state* atau *side effects*), mereka lebih mudah diuji.
+*   **Performa Lebih Baik (potensial)**: Dalam beberapa kasus, *functional components* dapat memiliki sedikit keuntungan performa karena tidak ada *overhead* dari *class instance*.
+*   **Menggunakan Hooks**: Dengan diperkenalkannya React Hooks, *functional components* dapat memiliki *state* dan *lifecycle features* yang sebelumnya hanya tersedia di *class components*.
+
+### 2. Props dan Prop Types
+
+**Props (Properties)** adalah cara untuk meneruskan data dari komponen induk ke komponen anak. Mereka adalah argumen yang diteruskan ke komponen React Anda. *Props* bersifat *read-only*, artinya komponen anak tidak boleh mengubah *props* yang diterimanya.
+
+**Contoh Penggunaan Props:**
+
+```jsx
+// Welcome.js
+import React from 'react';
+
+function Welcome(props) {
+  return <h1>Halo, {props.name}!</h1>;
+}
+
+export default Welcome;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import Welcome from './Welcome';
+
+function App() {
+  return (
+    <div>
+      <Welcome name="Alice" /> {/* Meneruskan prop 'name' */}
+      <Welcome name="Bob" />   {/* Meneruskan prop 'name' yang berbeda */}
+    </div>
+  );
+}
+
+export default App;
+```
+
+**Prop Types (Opsional, tetapi Direkomendasikan):**
+`prop-types` adalah *library* yang memungkinkan Anda mendefinisikan tipe data yang diharapkan untuk *props* komponen Anda. Ini membantu dalam *debugging* dan validasi data, terutama dalam proyek yang lebih besar.
+
+Untuk menggunakannya, Anda perlu menginstalnya terlebih dahulu:
+```bash
+npm install prop-types
+# atau
+yarn add prop-types
+```
+
+**Contoh Penggunaan Prop Types:**
+
+```jsx
+// ProductCard.js
+import React from 'react';
+import PropTypes from 'prop-types'; // Import PropTypes
+
+function ProductCard(props) {
+  return (
+    <div style={{ border: '1px solid gray', padding: '10px', margin: '10px' }}>
+      <h3>{props.productName}</h3>
+      <p>Harga: ${props.price}</p>
+      <p>Stok: {props.stock}</p>
+      {props.isAvailable && <p style={{ color: 'green' }}>Tersedia</p>}
+    </div>
+  );
+}
+
+// Mendefinisikan prop types untuk ProductCard
+ProductCard.propTypes = {
+  productName: PropTypes.string.isRequired, // productName harus string dan wajib
+  price: PropTypes.number.isRequired,       // price harus number dan wajib
+  stock: PropTypes.number,                  // stock harus number (opsional)
+  isAvailable: PropTypes.bool               // isAvailable harus boolean (opsional)
+};
+
+export default ProductCard;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import ProductCard from './ProductCard';
+
+function App() {
+  return (
+    <div>
+      <ProductCard productName="Laptop Gaming" price={1500} stock={10} isAvailable={true} />
+      <ProductCard productName="Keyboard Mekanik" price={120} isAvailable={false} />
+      {/* Jika Anda mencoba ProductCard productName={123} atau tidak memberikan price,
+          Anda akan melihat peringatan di konsol browser karena PropTypes */}
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 3. Props Destructuring
+
+Mendestrukturisasi *props* adalah praktik umum di React untuk membuat kode lebih ringkas dan mudah dibaca. Alih-alih mengakses *props* menggunakan `props.propertyName`, Anda dapat langsung mendestrukturisasi properti yang Anda butuhkan dari objek `props`.
+
+**Contoh Props Destructuring:**
+
+```jsx
+// Button.js
+import React from 'react';
+
+// Tanpa destructuring
+// function Button(props) {
+//   return <button onClick={props.onClick}>{props.text}</button>;
+// }
+
+// Dengan destructuring di parameter fungsi
+function Button({ onClick, text, color }) {
+  return (
+    <button onClick={onClick} style={{ backgroundColor: color, color: 'white', padding: '10px' }}>
+      {text}
+    </button>
+  );
+}
+
+export default Button;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import Button from './Button';
+
+function App() {
+  const handleClick = () => {
+    alert('Tombol diklik!');
+  };
+
+  return (
+    <div>
+      <Button onClick={handleClick} text="Klik Saya" color="blue" />
+      <Button onClick={() => console.log('Tombol kedua diklik')} text="Tombol Lain" color="green" />
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 4. Default Props
+
+`defaultProps` memungkinkan Anda untuk mendefinisikan nilai *default* untuk *props* komponen Anda. Ini berguna jika *prop* tertentu bersifat opsional dan Anda ingin memastikan bahwa selalu ada nilai yang tersedia jika *prop* tersebut tidak diteruskan oleh komponen induk.
+
+**Contoh Default Props:**
+
+```jsx
+// GreetingCard.js
+import React from 'react';
+
+function GreetingCard({ name, message }) {
+  return (
+    <div style={{ border: '1px solid #ccc', padding: '15px', margin: '10px' }}>
+      <h2>{message}, {name}!</h2>
+      <p>Semoga harimu menyenangkan.</p>
+    </div>
+  );
+}
+
+// Mendefinisikan nilai default untuk props
+GreetingCard.defaultProps = {
+  name: 'Pengunjung',
+  message: 'Halo'
+};
+
+export default GreetingCard;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import GreetingCard from './GreetingCard';
+
+function App() {
+  return (
+    <div>
+      <GreetingCard name="Siti" message="Selamat Pagi" />
+      <GreetingCard name="Budi" /> {/* message akan menggunakan nilai default "Halo" */}
+      <GreetingCard />             {/* name akan "Pengunjung", message akan "Halo" */}
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 5. Children Props
+
+`children` adalah *prop* khusus yang secara otomatis diteruskan ke setiap komponen yang dapat berisi elemen lain di antara tag pembuka dan penutupnya. Ini memungkinkan Anda untuk membuat komponen yang dapat "membungkus" konten lain.
+
+**Contoh Children Props:**
+
+```jsx
+// Card.js
+import React from 'react';
+
+function Card(props) {
+  return (
+    <div style={{ border: '1px solid black', padding: '20px', margin: '10px', borderRadius: '8px' }}>
+      {props.children} {/* Ini akan me-render semua yang ada di antara tag <Card> */}
+    </div>
+  );
+}
+
+export default Card;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import Card from './Card';
+
+function App() {
+  return (
+    <div>
+      <Card>
+        <h2>Judul Kartu Pertama</h2>
+        <p>Ini adalah konten di dalam kartu pertama.</p>
+        <button>Detail</button>
+      </Card>
+
+      <Card>
+        <h3>Kartu Kedua</h3>
+        <ul>
+          <li>Item 1</li>
+          <li>Item 2</li>
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 6. Component Composition
+
+*Component composition* adalah cara utama untuk membangun aplikasi React yang kompleks dengan menggabungkan komponen-komponen yang lebih kecil dan sederhana. Daripada menggunakan *inheritance* (seperti di *class-based programming*), React mendorong *composition* untuk menggunakan kembali kode antar komponen.
+
+Ini berarti Anda membangun komponen yang lebih besar dari komponen yang lebih kecil, seperti menyusun balok Lego.
+
+**Contoh Component Composition:**
+
+Misalkan kita memiliki komponen `Avatar`, `UserInfo`, dan `CommentText`. Kita bisa menggabungkannya untuk membuat komponen `Comment` yang lebih besar.
+
+```jsx
+// Avatar.js
+import React from 'react';
+
+function Avatar({ user }) {
+  return (
+    <img
+      className="Avatar"
+      src={user.avatarUrl}
+      alt={user.name}
+      style={{ width: '50px', height: '50px', borderRadius: '50%' }}
+    />
+  );
+}
+
+export default Avatar;
+```
+
+```jsx
+// UserInfo.js
+import React from 'react';
+import Avatar from './Avatar';
+
+function UserInfo({ user }) {
+  return (
+    <div className="UserInfo">
+      <Avatar user={user} />
+      <div className="UserInfo-name">{user.name}</div>
+    </div>
+  );
+}
+
+export default UserInfo;
+```
+
+```jsx
+// Comment.js
+import React from 'react';
+import UserInfo from './UserInfo';
+
+function Comment({ author, text, date }) {
+  return (
+    <div className="Comment" style={{ border: '1px solid #eee', padding: '15px', margin: '10px', borderRadius: '5px' }}>
+      <UserInfo user={author} />
+      <div className="Comment-text">
+        {text}
+      </div>
+      <div className="Comment-date" style={{ fontSize: '0.8em', color: '#666' }}>
+        {date.toLocaleDateString()}
+      </div>
+    </div>
+  );
+}
+
+export default Comment;
+```
+
+```jsx
+// App.js
+import React from 'react';
+import Comment from './Comment';
+
+function App() {
+  const commentData = {
+    date: new Date(),
+    text: 'Saya harap Anda menikmati belajar React!',
+    author: {
+      name: 'Hello Kitty',
+      avatarUrl: 'https://via.placeholder.com/50/FF0000/FFFFFF?text=HK',
+    },
+  };
+
+  return (
+    <div>
+      <h1>Contoh Komposisi Komponen</h1>
+      <Comment
+        author={commentData.author}
+        text={commentData.text}
+        date={commentData.date}
+      />
+      <Comment
+        author={{ name: 'React Lover', avatarUrl: 'https://via.placeholder.com/50/0000FF/FFFFFF?text=RL' }}
+        text="React membuat pengembangan UI menjadi menyenangkan!"
+        date={new Date()}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+Dengan memahami dan mempraktikkan *component composition*, Anda akan dapat membangun aplikasi React yang modular, mudah dikelola, dan dapat diskalakan.
+
+---
+
+## Tugas Harian
+
+Berikut adalah tugas yang harus dikerjakan oleh santri pada hari ketiga:
+
+1. **Membuat Functional Component Sederhana**
+   - Buatlah sebuah komponen React bernama `Greeting` yang menerima prop `name` dan menampilkan pesan sapaan personal, misal: "Halo, Budi!".
+
+2. **Menggunakan dan Memvalidasi Props**
+   - Buatlah komponen `ProductCard` yang menerima props: `productName`, `price`, `stock`, dan `isAvailable`.
+   - Tampilkan informasi produk tersebut dengan styling sederhana.
+   - Tambahkan validasi tipe data props menggunakan `prop-types` dan tentukan nilai default untuk props yang opsional.
+
+3. **Membuat Komponen dengan Children Props**
+   - Buatlah komponen `Card` yang dapat membungkus konten apapun menggunakan `children`.
+   - Gunakan komponen ini untuk menampilkan beberapa konten berbeda (misal: teks, gambar, tombol) di dalam `Card`.
+
+4. **Membuat Komposisi Komponen**
+   - Buatlah komponen `Comment` yang terdiri dari komponen-komponen kecil seperti `Avatar`, `UserInfo`, dan `CommentText`.
+   - Gunakan komposisi komponen untuk membangun tampilan komentar yang lengkap.
+
+> **Catatan:**
+> - Tugas dikerjakan secara individu dan dikumpulkan dalam bentuk file markdown atau dokumen digital.
+> - Sertakan hasil kode (screenshot atau link repository) pada setiap tugas yang membutuhkan implementasi React.
