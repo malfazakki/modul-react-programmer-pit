@@ -1,0 +1,372 @@
+# Modul Pembelajaran React.js - Hari ke-16
+
+## Topik Harian: React Router - Routing Dasar
+
+Pada hari keenam belas ini, kita akan mempelajari **React Router**, *library* standar de facto untuk *routing* di aplikasi React. *Routing* adalah kemampuan untuk menavigasi antar halaman atau tampilan yang berbeda dalam aplikasi *Single Page Application* (SPA) tanpa perlu me-*refresh* seluruh halaman.
+
+## Kompetensi:
+
+*   Memahami konsep *Client-side routing* dan *Single Page Applications*.
+*   Mampu melakukan instalasi dan *setup* dasar React Router.
+*   Mampu menggunakan komponen `BrowserRouter`, `Routes`, dan `Route`.
+*   Mampu menggunakan komponen `Link` dan `NavLink` untuk navigasi.
+*   Mampu mengimplementasikan *Route Parameters*.
+*   Mampu mengimplementasikan *Nested Routes*.
+
+## Materi Pembelajaran:
+
+### 1. React Router Installation dan Setup
+
+React Router adalah *library* eksternal, jadi Anda perlu menginstalnya terlebih dahulu.
+
+**Instalasi:**
+```bash
+npm install react-router-dom
+# atau
+yarn add react-router-dom
+```
+
+**Setup Dasar:**
+Setelah instalasi, Anda perlu membungkus seluruh aplikasi Anda (atau bagian yang membutuhkan *routing*) dengan komponen *router* dari `react-router-dom`. Yang paling umum digunakan adalah `BrowserRouter`.
+
+```jsx
+// src/index.js atau src/App.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom'; // Import BrowserRouter
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <BrowserRouter> {/* Bungkus aplikasi Anda dengan BrowserRouter */}
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+
+### 2. BrowserRouter, Routes, Route
+
+Ini adalah komponen inti dari React Router yang akan Anda gunakan untuk mendefinisikan *routing* aplikasi Anda.
+
+*   **`BrowserRouter`**:
+    *   Digunakan untuk mengaktifkan *client-side routing* menggunakan *History API* HTML5.
+    *   Harus menjadi komponen induk dari semua komponen *routing* lainnya.
+    *   Biasanya ditempatkan di level tertinggi aplikasi Anda (misalnya di `index.js` atau `App.js`).
+
+*   **`Routes`**:
+    *   Digunakan untuk mengelompokkan beberapa `Route`.
+    *   Hanya akan me-*render* `Route` pertama yang cocok dengan URL saat ini. Ini penting untuk menghindari *rendering* beberapa komponen secara bersamaan jika beberapa *route* cocok.
+
+*   **`Route`**:
+    *   Digunakan untuk mendefinisikan jalur (*path*) dan komponen yang akan di-*render* ketika jalur tersebut cocok dengan URL.
+    *   Menerima *prop* `path` (jalur URL) dan *prop* `element` (komponen yang akan di-*render*).
+
+**Contoh Dasar:**
+
+```jsx
+// src/pages/Home.js
+import React from 'react';
+function Home() {
+  return <h2>Halaman Beranda</h2>;
+}
+export default Home;
+
+// src/pages/About.js
+import React from 'react';
+function About() {
+  return <h2>Tentang Kami</h2>;
+}
+export default About;
+
+// src/pages/Contact.js
+import React from 'react';
+function Contact() {
+  return <h2>Hubungi Kami</h2>;
+}
+export default Contact;
+
+// src/pages/NotFound.js
+import React from 'react';
+function NotFound() {
+  return <h2>404 - Halaman Tidak Ditemukan</h2>;
+}
+export default NotFound;
+
+// src/App.js
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound'; // Komponen untuk 404
+
+function App() {
+  return (
+    <div>
+      <h1>Aplikasi React Router</h1>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<NotFound />} /> {/* Route untuk 404 (catch-all) */}
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 3. Link dan NavLink Components
+
+Untuk navigasi antar halaman, Anda harus menggunakan komponen `Link` atau `NavLink` dari `react-router-dom` daripada tag `<a>` HTML biasa. Menggunakan `<a>` akan menyebabkan *refresh* halaman penuh, yang bertentangan dengan konsep SPA.
+
+*   **`Link`**:
+    *   Digunakan untuk navigasi dasar.
+    *   Menerima *prop* `to` yang menentukan jalur tujuan.
+
+*   **`NavLink`**:
+    *   Mirip dengan `Link`, tetapi memiliki kemampuan tambahan untuk menambahkan kelas CSS aktif ke elemen ketika jalur yang dituju cocok dengan URL saat ini.
+    *   Berguna untuk menyorot tautan navigasi yang sedang aktif (misalnya, di bilah navigasi).
+    *   Menerima *prop* `className` yang bisa berupa *string* atau fungsi.
+
+**Contoh Link dan NavLink:**
+
+```jsx
+// src/App.js (lanjutan dari contoh sebelumnya)
+import React from 'react';
+import { Routes, Route, Link, NavLink } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
+
+function App() {
+  return (
+    <div>
+      <h1>Aplikasi React Router</h1>
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">Beranda (Link)</Link>
+          </li>
+          <li>
+            <NavLink
+              to="/about"
+              className={({ isActive }) => (isActive ? 'active-link' : undefined)}
+            >
+              Tentang (NavLink)
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/contact"
+              style={({ isActive }) => ({
+                color: isActive ? 'red' : 'black',
+                fontWeight: isActive ? 'bold' : 'normal'
+              })}
+            >
+              Kontak (NavLink dengan Style)
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
+
+      <hr />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
+``````css
+/* Tambahkan di App.css atau file CSS global Anda */
+.active-link {
+  font-weight: bold;
+  color: blue;
+  text-decoration: underline;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+
+nav li a {
+  text-decoration: none;
+  color: black;
+}
+```
+
+### 4. Route Parameters
+
+*Route parameters* memungkinkan Anda untuk menangkap segmen dinamis dari URL. Ini sangat berguna untuk menampilkan detail item tertentu (misalnya, `/products/123` di mana `123` adalah ID produk).
+
+Anda mendefinisikan *route parameter* dengan menambahkan titik dua (`:`) di depan nama parameter di `path`. Anda dapat mengakses nilai parameter menggunakan `useParams` Hook.
+
+**Contoh Route Parameters:**
+
+```jsx
+// src/pages/ProductDetail.js
+import React from 'react';
+import { useParams } from 'react-router-dom'; // Import useParams
+
+function ProductDetail() {
+  const { productId } = useParams(); // Mengambil nilai parameter 'productId'
+
+  return (
+    <div>
+      <h2>Detail Produk</h2>
+      <p>ID Produk: {productId}</p>
+      <p>Ini adalah halaman detail untuk produk dengan ID {productId}.</p>
+    </div>
+  );
+}
+export default ProductDetail;
+
+// src/App.js (lanjutan)
+import React from 'react';
+import { Routes, Route, Link, NavLink } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import ProductDetail from './pages/ProductDetail'; // Import ProductDetail
+import NotFound from './pages/NotFound';
+
+function App() {
+  return (
+    <div>
+      <h1>Aplikasi React Router</h1>
+      <nav>
+        <ul>
+          <li><Link to="/">Beranda</Link></li>
+          <li><Link to="/about">Tentang</Link></li>
+          <li><Link to="/contact">Kontak</Link></li>
+          <li><Link to="/products/1">Produk 1</Link></li> {/* Contoh link dengan parameter */}
+          <li><Link to="/products/abc">Produk ABC</Link></li>
+        </ul>
+      </nav>
+
+      <hr />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/products/:productId" element={<ProductDetail />} /> {/* Definisi route parameter */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 5. Nested Routes
+
+*Nested routes* memungkinkan Anda untuk memiliki *route* di dalam *route* lain. Ini sangat berguna untuk membangun tata letak yang kompleks di mana bagian-bagian dari UI berubah berdasarkan sub-jalur URL.
+
+Untuk membuat *nested routes*:
+1.  Definisikan *route* induk dengan `path` yang diakhiri dengan `/*` (atau tanpa `/*` jika Anda ingin *route* induk juga me-*render* sesuatu).
+2.  Di dalam komponen yang di-*render* oleh *route* induk, gunakan komponen `Outlet` dari `react-router-dom` untuk menentukan di mana *nested route* akan di-*render*.
+3.  Definisikan `Route` anak di dalam `Route` induk.
+
+**Contoh Nested Routes:**
+
+```jsx
+// src/pages/Dashboard.js
+import React from 'react';
+import { Outlet, Link } from 'react-router-dom'; // Import Outlet dan Link
+
+function Dashboard() {
+  return (
+    <div>
+      <h2>Halaman Dashboard</h2>
+      <nav>
+        <ul>
+          <li><Link to="profile">Profil Saya</Link></li> {/* Relatif ke /dashboard */}
+          <li><Link to="settings">Pengaturan</Link></li> {/* Relatif ke /dashboard */}
+        </ul>
+      </nav>
+      <hr />
+      {/* Outlet akan me-render komponen dari nested route yang cocok */}
+      <Outlet />
+    </div>
+  );
+}
+export default Dashboard;
+
+// src/pages/DashboardProfile.js
+import React from 'react';
+function DashboardProfile() {
+  return <h3>Ini adalah Profil Pengguna</h3>;
+}
+export default DashboardProfile;
+
+// src/pages/DashboardSettings.js
+import React from 'react';
+function DashboardSettings() {
+  return <h3>Ini adalah Pengaturan Akun</h3>;
+}
+export default DashboardSettings;
+
+// src/App.js (lanjutan)
+import React from 'react';
+import { Routes, Route, Link, NavLink } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import ProductDetail from './pages/ProductDetail';
+import Dashboard from './pages/Dashboard'; // Import Dashboard
+import DashboardProfile from './pages/DashboardProfile'; // Import DashboardProfile
+import DashboardSettings from './pages/DashboardSettings'; // Import DashboardSettings
+import NotFound from './pages/NotFound';
+
+function App() {
+  return (
+    <div>
+      <h1>Aplikasi React Router</h1>
+      <nav>
+        <ul>
+          <li><Link to="/">Beranda</Link></li>
+          <li><Link to="/about">Tentang</Link></li>
+          <li><Link to="/contact">Kontak</Link></li>
+          <li><Link to="/products/1">Produk 1</Link></li>
+          <li><Link to="/dashboard">Dashboard</Link></li> {/* Link ke dashboard */}
+        </ul>
+      </nav>
+
+      <hr />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/products/:productId" element={<ProductDetail />} />
+        {/* Definisi Nested Routes */}
+        <Route path="/dashboard" element={<Dashboard />}>
+          <Route path="profile" element={<DashboardProfile />} /> {/* Jalur relatif: /dashboard/profile */}
+          <Route path="settings" element={<DashboardSettings />} /> {/* Jalur relatif: /dashboard/settings */}
+          <Route index element={<h3>Pilih salah satu menu di atas.</h3>} /> {/* Default child route */}
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
+```
+
+Dengan menguasai React Router, Anda akan dapat membangun aplikasi *Single Page Application* yang kompleks dengan navigasi yang mulus dan terstruktur.

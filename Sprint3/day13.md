@@ -1,0 +1,296 @@
+# Modul Pembelajaran React.js - Hari ke-13
+
+## Topik Harian: useContext dan Context API
+
+Pada hari ketiga belas ini, kita akan fokus pada **Context API** dan **`useContext` Hook**. Context API adalah fitur bawaan React yang memungkinkan Anda berbagi data di seluruh pohon komponen tanpa harus meneruskan *props* secara manual di setiap level (*prop drilling*). Ini sangat berguna untuk data yang dianggap "global" atau dibutuhkan oleh banyak komponen di berbagai kedalaman.
+
+## Kompetensi:
+
+*   Memahami konsep *Global State* di React.
+*   Memahami pengenalan *Context API*.
+*   Mampu membuat *context providers*.
+*   Mampu menggunakan `useContext` Hook untuk mengkonsumsi *context*.
+*   Mampu mengimplementasikan *multiple contexts*.
+*   Memahami *best practices* dalam penggunaan Context API.
+*   Mampu menggunakan Context API sebagai solusi untuk *prop drilling*.
+
+## Materi Pembelajaran:
+
+### 1. Context API Introduction
+
+React Context menyediakan cara untuk meneruskan data melalui pohon komponen tanpa harus meneruskan *props* secara manual di setiap level. Ini dirancang untuk berbagi data yang dapat dianggap "global" untuk pohon komponen React, seperti tema saat ini, informasi pengguna yang diautentikasi, atau pengaturan bahasa.
+
+**Masalah yang Dipecahkan oleh Context API:**
+*   **Prop Drilling**: Seperti yang dibahas sebelumnya, *prop drilling* terjadi ketika *props* harus diteruskan melalui banyak komponen perantara yang sebenarnya tidak membutuhkan *props* tersebut, hanya untuk mencapai komponen anak yang membutuhkannya. Context API menghilangkan kebutuhan ini.
+*   **Global State Sederhana**: Untuk *state* yang tidak terlalu kompleks dan tidak memerlukan *library* manajemen *state* eksternal seperti Redux, Context API bisa menjadi solusi yang ringan dan efektif.
+
+### 2. Creating Context Providers
+
+Untuk menggunakan Context API, Anda perlu membuat *context* dan kemudian menyediakan nilainya kepada komponen di bawahnya dalam pohon komponen.
+
+**Langkah-langkah Membuat Context:**
+
+1.  **Buat Context**: Gunakan `React.createContext()` untuk membuat objek *context*. Ini mengembalikan objek dengan dua komponen: `Provider` dan `Consumer`.
+    ```jsx
+    // ThemeContext.js
+    import React from 'react';
+
+    const ThemeContext = React.createContext('light'); // 'light' adalah nilai default
+
+    export default ThemeContext;
+    ```
+
+2.  **Sediakan Nilai Context dengan `Provider`**: Komponen `Provider` adalah bagian dari objek *context* yang Anda buat. Ia menerima *prop* `value` yang akan diteruskan ke semua komponen anak yang mengkonsumsi *context* ini. Bungkus komponen yang perlu mengakses *context* dengan `Provider`.
+
+    ```jsx
+    // ThemeProvider.js
+    import React, { useState } from 'react';
+    import ThemeContext from './ThemeContext';
+
+    function ThemeProvider({ children }) {
+      const [theme, setTheme] = useState('light');
+
+      const toggleTheme = () => {
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+      };
+
+      // Nilai yang akan disediakan ke konsumen
+      const contextValue = { theme, toggleTheme };
+
+      return (
+        <ThemeContext.Provider value={contextValue}>
+          {children}
+        </ThemeContext.Provider>
+      );
+    }
+
+    export default ThemeProvider;
+    ```
+
+### 3. useContext Hook
+
+`useContext` adalah Hook yang memungkinkan *functional components* untuk mengkonsumsi nilai dari *context* yang telah disediakan. Ini adalah cara yang lebih modern dan ringkas dibandingkan dengan `Context.Consumer` yang berbasis *render prop*.
+
+**Sintaks Dasar:**
+
+```jsx
+import React, { useContext } from 'react';
+import ThemeContext from './ThemeContext'; // Import context yang sudah dibuat
+
+function ThemedButton() {
+  // Menggunakan useContext untuk mengakses nilai dari ThemeContext
+  const { theme, toggleTheme } = useContext(ThemeContext);
+
+  const buttonStyle = {
+    backgroundColor: theme === 'light' ? '#eee' : '#333',
+    color: theme === 'light' ? '#333' : '#eee',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer'
+  };
+
+  return (
+    <button style={buttonStyle} onClick={toggleTheme}>
+      Ganti Tema ({theme})
+    </button>
+  );
+}
+
+export default ThemedButton;
+```
+
+**Contoh Lengkap (Provider dan Consumer):**
+
+```jsx
+// App.js
+import React from 'react';
+import ThemeProvider from './ThemeProvider'; // Provider
+import ThemedButton from './ThemedButton'; // Consumer
+import ThemedParagraph from './ThemedParagraph'; // Consumer
+
+// ThemedParagraph.js (Contoh consumer lain)
+import React, { useContext } from 'react';
+import ThemeContext from './ThemeContext';
+
+function ThemedParagraph() {
+  const { theme } = useContext(ThemeContext);
+  const paragraphStyle = {
+    color: theme === 'light' ? '#000' : '#fff',
+    backgroundColor: theme === 'light' ? '#fff' : '#222',
+    padding: '10px',
+    borderRadius: '5px'
+  };
+  return (
+    <p style={paragraphStyle}>
+      Ini adalah paragraf dengan tema {theme}.
+    </p>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider> {/* Bungkus komponen yang membutuhkan context dengan Provider */}
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Aplikasi dengan Context API</h2>
+        <ThemedButton />
+        <ThemedParagraph />
+        <p>
+          Context API membantu menghindari prop drilling untuk data global.
+        </p>
+      </div>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+```
+
+### 4. Multiple Contexts
+
+Anda dapat memiliki beberapa *context* dalam aplikasi React Anda. Misalnya, satu *context* untuk tema dan satu lagi untuk informasi pengguna. Untuk menggunakannya, Anda cukup membuat dan menyediakan setiap *context* secara terpisah.
+
+**Contoh Multiple Contexts:**
+
+```jsx
+// UserContext.js
+import React from 'react';
+const UserContext = React.createContext(null);
+export default UserContext;
+
+// UserProvider.js
+import React, { useState } from 'react';
+import UserContext from './UserContext';
+
+function UserProvider({ children }) {
+  const [user, setUser] = useState({ name: 'Guest', isLoggedIn: false });
+
+  const login = (username) => {
+    setUser({ name: username, isLoggedIn: true });
+  };
+
+  const logout = () => {
+    setUser({ name: 'Guest', isLoggedIn: false });
+  };
+
+  const contextValue = { user, login, logout };
+
+  return (
+    <UserContext.Provider value={contextValue}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+export default UserProvider;
+
+// UserInfoDisplay.js
+import React, { useContext } from 'react';
+import UserContext from './UserContext';
+
+function UserInfoDisplay() {
+  const { user, login, logout } = useContext(UserContext);
+
+  return (
+    <div>
+      <p>Selamat datang, {user.name}!</p>
+      {user.isLoggedIn ? (
+        <button onClick={logout}>Logout</button>
+      ) : (
+        <button onClick={() => login('Alice')}>Login sebagai Alice</button>
+      )}
+    </div>
+  );
+}
+export default UserInfoDisplay;
+
+// App.js (Menggabungkan ThemeContext dan UserContext)
+import React from 'react';
+import ThemeProvider from './ThemeProvider'; // Dari contoh sebelumnya
+import UserProvider from './UserProvider';
+import ThemedButton from './ThemedButton'; // Dari contoh sebelumnya
+import ThemedParagraph from './ThemedParagraph'; // Dari contoh sebelumnya
+import UserInfoDisplay from './UserInfoDisplay';
+
+function App() {
+  return (
+    <ThemeProvider> {/* Provider pertama */}
+      <UserProvider> {/* Provider kedua */}
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h2>Aplikasi dengan Multiple Contexts</h2>
+          <ThemedButton />
+          <ThemedParagraph />
+          <hr />
+          <UserInfoDisplay />
+        </div>
+      </UserProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+```
+Anda dapat menumpuk `Provider` sebanyak yang Anda butuhkan. Komponen anak akan dapat mengakses semua *context* yang disediakan oleh *provider* di atasnya.
+
+### 5. Context Best Practices
+
+Meskipun Context API sangat berguna, ada beberapa *best practices* yang perlu diingat:
+
+*   **Gunakan untuk Data "Global"**: Context API paling cocok untuk data yang dianggap "global" untuk pohon komponen, seperti tema, informasi pengguna, atau pengaturan bahasa.
+*   **Hindari untuk State yang Sering Berubah**: Jika *context* Anda berisi *state* yang sering berubah, komponen yang mengkonsumsi *context* tersebut akan di-*re-render* setiap kali *context* berubah. Ini dapat menyebabkan masalah performa jika tidak dikelola dengan hati-hati. Untuk *state* yang sering berubah, pertimbangkan `useState` atau `useReducer` di komponen lokal, atau *library* manajemen *state* eksternal.
+*   **Pisahkan Context untuk Concern yang Berbeda**: Jangan menempatkan semua *state* aplikasi Anda dalam satu *context* besar. Pisahkan *context* berdasarkan *concern* (misalnya, `ThemeContext`, `UserContext`, `CartContext`). Ini membuat *context* lebih mudah dikelola dan di-*debug*.
+*   **Buat Custom Hook untuk Konsumsi Context**: Untuk menyederhanakan penggunaan `useContext` dan menambahkan validasi, Anda dapat membuat *custom hook*.
+    ```jsx
+    // useTheme.js
+    import { useContext } from 'react';
+    import ThemeContext from './ThemeContext';
+
+    export function useTheme() {
+      const context = useContext(ThemeContext);
+      if (context === undefined) {
+        throw new Error('useTheme must be used within a ThemeProvider');
+      }
+      return context;
+    }
+    ```    Kemudian di komponen Anda: `const { theme, toggleTheme } = useTheme();`
+*   **Pertimbangkan `useReducer` dengan Context**: Untuk *state* yang lebih kompleks dalam *context*, Anda dapat menggabungkan `useReducer` dengan Context API. `useReducer` mengelola logika *state*, dan Context API menyediakannya ke seluruh pohon komponen.
+
+Context API adalah alat yang ampuh dalam gudang senjata React Anda untuk mengelola *state* dan menghindari *prop drilling*. Dengan menggunakannya secara bijak, Anda dapat membangun aplikasi yang lebih bersih dan mudah dipelihara.
+
+---
+
+## Tugas Harian
+
+Berikut adalah tugas yang harus dikerjakan oleh santri pada hari ketiga belas:
+
+1. **Membuat Context Provider Sederhana**
+   - Buatlah Context untuk mengelola data pengguna (user) dengan informasi nama, email, dan status login.
+   - Implementasikan Provider yang menyediakan fungsi login, logout, dan update profile.
+   - Tampilkan informasi pengguna di komponen terpisah yang menggunakan useContext.
+
+2. **Menerapkan Theme Context dengan Toggle**
+   - Buatlah Context untuk mengelola tema aplikasi (light/dark mode).
+   - Implementasikan Provider dengan fungsi toggle tema dan state tema saat ini.
+   - Buatlah minimal 3 komponen yang menggunakan tema tersebut (button, card, text) dengan styling yang berbeda untuk setiap tema.
+
+3. **Multiple Contexts Implementation**
+   - Buatlah dua Context terpisah: LanguageContext (untuk bahasa) dan NotificationContext (untuk notifikasi).
+   - Implementasikan Provider untuk masing-masing Context.
+   - Buatlah komponen yang menggunakan kedua Context sekaligus (misal: komponen header yang menampilkan bahasa dan jumlah notifikasi).
+
+4. **Custom Hook untuk Context**
+   - Buatlah custom hook `useUserContext()` yang mengkonsumsi UserContext.
+   - Tambahkan validasi di custom hook untuk memastikan hook digunakan di dalam Provider.
+   - Implementasikan custom hook tersebut di komponen yang membutuhkan data user.
+
+5. **Context API untuk Shopping Cart**
+   - Buatlah Context untuk mengelola shopping cart dengan fungsi add item, remove item, dan clear cart.
+   - Implementasikan Provider yang menyimpan state cart (array of items) dan total harga.
+   - Buatlah komponen ProductList untuk menampilkan produk dan tombol "Add to Cart".
+   - Buatlah komponen CartDisplay untuk menampilkan item di cart dan total harga.
+   - Pastikan kedua komponen menggunakan Context yang sama tanpa prop drilling.
+
+> **Catatan:**
+> - Tugas dikerjakan secara individu dan dikumpulkan dalam bentuk file markdown atau dokumen digital.
+> - Sertakan hasil kode (screenshot atau link repository) pada setiap tugas yang membutuhkan implementasi React.
+> - Pastikan setiap Context memiliki Provider yang membungkus komponen yang mengkonsumsi Context tersebut.
+> - Demonstrasikan kemampuan untuk menghindari prop drilling dengan menggunakan Context API.

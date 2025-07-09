@@ -1,0 +1,400 @@
+# Modul Pembelajaran React.js - Hari ke-17
+
+## Topik Harian: React Router - Advanced Features
+
+Pada hari ketujuh belas ini, kita akan melanjutkan eksplorasi React Router dengan fitur-fitur yang lebih canggih. Kita akan mempelajari cara melakukan navigasi secara programatik, melindungi *route*, menangani *query parameters*, dan membuat halaman kesalahan 404 yang lebih baik.
+
+## Kompetensi:
+
+*   Mampu menggunakan `useNavigate`, `useParams`, dan `useLocation` Hooks.
+*   Mampu melakukan *Programmatic Navigation*.
+*   Mampu mengimplementasikan *Route Guards* dan *Protection*.
+*   Mampu bekerja dengan *Query Parameters*.
+*   Mampu membuat halaman 404 dan menggunakan *Error Boundaries*.
+
+## Materi Pembelajaran:
+
+### 1. useNavigate, useParams, useLocation Hooks
+
+React Router menyediakan beberapa *Hooks* yang sangat berguna untuk berinteraksi dengan *router* di dalam komponen fungsional Anda.
+
+*   **`useNavigate`**:
+    *   Mengembalikan fungsi yang memungkinkan Anda untuk menavigasi secara programatik.
+    *   Menggantikan `useHistory` dari React Router v5.
+    *   Dapat menerima jalur (*path*) sebagai *string* atau objek.
+
+    ```jsx
+    import React from 'react';
+    import { useNavigate } from 'react-router-dom';
+
+    function DashboardButton() {
+      const navigate = useNavigate();
+
+      const goToDashboard = () => {
+        navigate('/dashboard'); // Navigasi ke /dashboard
+      };
+
+      const goToHomeAndReplace = () => {
+        navigate('/', { replace: true }); // Navigasi ke / dan mengganti entri di history stack
+      };
+
+      const goBack = () => {
+        navigate(-1); // Kembali ke halaman sebelumnya
+      };
+
+      return (
+        <div>
+          <button onClick={goToDashboard}>Pergi ke Dashboard</button>
+          <button onClick={goToHomeAndReplace}>Pergi ke Beranda (Replace)</button>
+          <button onClick={goBack}>Kembali</button>
+        </div>
+      );
+    }
+    export default DashboardButton;
+    ```
+
+*   **`useParams`**:
+    *   Mengembalikan objek dari pasangan kunci/nilai parameter URL dinamis.
+    *   Digunakan untuk mengakses nilai dari *route parameters* (misalnya, `:id`, `:slug`).
+
+    ```jsx
+    import React from 'react';
+    import { useParams } from 'react-router-dom';
+
+    function UserProfile() {
+      const { userId } = useParams(); // Mengambil parameter 'userId' dari URL
+
+      return (
+        <div>
+          <h3>Profil Pengguna: {userId}</h3>
+          <p>Menampilkan detail untuk pengguna dengan ID: {userId}</p>
+        </div>
+      );
+    }
+    export default UserProfile;
+    ```
+
+*   **`useLocation`**:
+    *   Mengembalikan objek `location` yang mewakili URL saat ini.
+    *   Objek `location` memiliki properti seperti `pathname`, `search` (untuk *query parameters*), `hash`, dan `state`.
+
+    ```jsx
+    import React from 'react';
+    import { useLocation } from 'react-router-dom';
+
+    function CurrentLocationInfo() {
+      const location = useLocation();
+
+      return (
+        <div>
+          <h3>Informasi Lokasi Saat Ini</h3>
+          <p>Pathname: {location.pathname}</p>
+          <p>Search (Query Params): {location.search}</p>
+          <p>Hash: {location.hash}</p>
+          {location.state && <p>State: {JSON.stringify(location.state)}</p>}
+        </div>
+      );
+    }
+    export default CurrentLocationInfo;
+    ```
+
+### 2. Programmatic Navigation
+
+*Programmatic navigation* adalah kemampuan untuk mengarahkan pengguna ke *route* lain berdasarkan logika aplikasi, bukan hanya melalui klik `Link` atau `NavLink`. Ini sering digunakan setelah *form submission*, *login* berhasil, atau dalam *event handler* lainnya.
+
+**Contoh Programmatic Navigation:**
+
+```jsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+function LoginForm() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Simulasi proses login
+    if (username === 'user' && password === 'pass') {
+      alert('Login Berhasil!');
+      // Navigasi ke halaman dashboard setelah login berhasil
+      navigate('/dashboard', { state: { fromLogin: true } }); // Meneruskan state tambahan
+    } else {
+      alert('Username atau password salah!');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Login</h2>
+      <div>
+        <label>Username:</label>
+        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+      </div>
+      <div>
+        <label>Password:</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+export default LoginForm;
+```
+
+### 3. Route Guards dan Protection
+
+*Route guards* atau *route protection* adalah mekanisme untuk mengontrol akses ke *route* tertentu berdasarkan kondisi (misalnya, apakah pengguna sudah *login*, memiliki peran tertentu, dll.).
+
+**Pendekatan Umum:**
+*   **Komponen Pembungkus (Wrapper Component)**: Buat komponen yang memeriksa kondisi otentikasi/otorisasi dan me-*render* komponen anak atau mengarahkan ulang jika kondisi tidak terpenuhi.
+*   **Menggunakan `Outlet` dan `useNavigate`**: Di dalam *nested routes*, Anda bisa memeriksa kondisi di komponen induk dan menggunakan `Outlet` untuk me-*render* anak atau `useNavigate` untuk mengarahkan ulang.
+
+**Contoh Route Guard (Protected Route):**
+
+```jsx
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+
+// Asumsikan ada cara untuk memeriksa status otentikasi
+const isAuthenticated = () => {
+  // Logika otentikasi Anda (misalnya, memeriksa token di localStorage)
+  return localStorage.getItem('authToken') === 'my_secret_token';
+};
+
+function PrivateRoute() {
+  if (!isAuthenticated()) {
+    // Jika tidak terautentikasi, arahkan ke halaman login
+    return <Navigate to="/login" replace />;
+  }
+  // Jika terautentikasi, render komponen anak (nested routes)
+  return <Outlet />;
+}
+export default PrivateRoute;
+
+// Penggunaan di App.js
+// <Routes>
+//   <Route path="/login" element={<LoginForm />} />
+//   <Route element={<PrivateRoute />}> {/* Ini adalah route guard */}
+//     <Route path="/dashboard" element={<Dashboard />} />
+//     <Route path="/settings" element={<Settings />} />
+//   </Route>
+// </Routes>
+```
+
+### 4. Query Parameters
+
+*Query parameters* adalah bagian dari URL yang dimulai dengan tanda tanya (`?`) dan digunakan untuk meneruskan data tambahan yang tidak menjadi bagian dari struktur *path* *route*. Contoh: `/products?category=electronics&sort=price`.
+
+Anda dapat mengakses *query parameters* menggunakan `useSearchParams` Hook.
+
+**Contoh Query Parameters:**
+
+```jsx
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+function ProductSearch() {
+  const [searchParams, setSearchParams] = useSearchParams(); // Hook untuk query params
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const category = searchParams.get('category') || 'all'; // Ambil nilai 'category'
+  const sort = searchParams.get('sort') || 'name';     // Ambil nilai 'sort'
+
+  useEffect(() => {
+    setLoading(true);
+    // Simulasi fetching data berdasarkan query parameters
+    console.log(`Fetching products for category: ${category}, sort: ${sort}`);
+    setTimeout(() => {
+      const dummyProducts = [
+        { id: 1, name: 'Laptop', category: 'electronics', price: 1200 },
+        { id: 2, name: 'Mouse', category: 'electronics', price: 25 },
+        { id: 3, name: 'T-Shirt', category: 'apparel', price: 20 },
+        { id: 4, name: 'Jeans', category: 'apparel', price: 50 },
+      ];
+      let filteredProducts = dummyProducts;
+
+      if (category !== 'all') {
+        filteredProducts = filteredProducts.filter(p => p.category === category);
+      }
+      if (sort === 'price') {
+        filteredProducts.sort((a, b) => a.price - b.price);
+      } else {
+        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      setProducts(filteredProducts);
+      setLoading(false);
+    }, 500);
+  }, [category, sort]); // Effect akan dijalankan ulang jika category atau sort berubah
+
+  const handleCategoryChange = (e) => {
+    setSearchParams({ category: e.target.value, sort }); // Update query params
+  };
+
+  const handleSortChange = (e) => {
+    setSearchParams({ category, sort: e.target.value }); // Update query params
+  };
+
+  if (loading) return <p>Memuat produk...</p>;
+
+  return (
+    <div>
+      <h2>Pencarian Produk</h2>
+      <div>
+        <label>Kategori:</label>
+        <select value={category} onChange={handleCategoryChange}>
+          <option value="all">Semua</option>
+          <option value="electronics">Elektronik</option>
+          <option value="apparel">Pakaian</option>
+        </select>
+      </div>
+      <div>
+        <label>Urutkan Berdasarkan:</label>
+        <select value={sort} onChange={handleSortChange}>
+          <option value="name">Nama</option>
+          <option value="price">Harga</option>
+        </select>
+      </div>
+      <ul>
+        {products.map(product => (
+          <li key={product.id}>
+            {product.name} ({product.category}) - ${product.price}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+export default ProductSearch;
+```
+
+### 5. 404 Pages dan Error Boundaries
+
+#### a. 404 Pages (Not Found)
+
+Untuk menangani *route* yang tidak cocok, Anda dapat mendefinisikan *catch-all route* di akhir daftar `Routes` Anda.
+
+```jsx
+// src/App.js (contoh dari hari ke-16)
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import NotFound from './pages/NotFound'; // Komponen untuk 404
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      {/* ... route lainnya ... */}
+      <Route path="*" element={<NotFound />} /> {/* Ini akan menangkap semua path yang tidak cocok */}
+    </Routes>
+  );
+}
+export default App;
+
+// src/pages/NotFound.js
+import React from 'react';
+function NotFound() {
+  return (
+    <div>
+      <h1>404 - Halaman Tidak Ditemukan</h1>
+      <p>Maaf, halaman yang Anda cari tidak ada.</p>
+      <p><a href="/">Kembali ke Beranda</a></p>
+    </div>
+  );
+}
+export default NotFound;
+```
+
+#### b. Error Boundaries
+
+*Error Boundaries* adalah komponen React yang menangkap kesalahan JavaScript di mana saja di pohon komponen anak mereka, mencatat kesalahan tersebut, dan menampilkan UI *fallback* alih-alih merusak seluruh pohon UI.
+
+**Kapan Menggunakan Error Boundaries?**
+*   Untuk menangkap kesalahan *rendering* (misalnya, *bug* di `render` method atau di dalam *lifecycle methods*).
+*   Untuk menangkap kesalahan di dalam *event handlers* (meskipun ini tidak akan merusak seluruh aplikasi, tetapi *error boundary* dapat membantu mencatatnya).
+
+**Catatan**: *Error Boundaries* adalah *class components* karena mereka perlu mengimplementasikan *lifecycle methods* `static getDerivedStateFromError()` atau `componentDidCatch()`.
+
+**Contoh Error Boundary:**
+
+```jsx
+import React from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Memperbarui state sehingga render berikutnya akan menampilkan UI fallback.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Anda juga bisa mencatat error ke layanan pelaporan error
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Anda bisa me-render UI fallback kustom apa pun
+      return (
+        <div style={{ border: '1px solid red', padding: '20px', margin: '20px', backgroundColor: '#ffe6e6' }}>
+          <h2>Terjadi Kesalahan!</h2>
+          <p>Maaf, ada yang tidak beres.</p>
+          {/* Untuk debugging, Anda bisa menampilkan detail error */}
+          {/* <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details> */}
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Komponen yang mungkin mengalami error
+function BuggyComponent() {
+  const [count, setCount] = React.useState(0);
+
+  const handleClick = () => {
+    setCount(prev => prev + 1);
+    if (count === 2) {
+      // Mensimulasikan error
+      throw new Error('Saya adalah error yang disengaja!');
+    }
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={handleClick}>Tambah Count (akan error di 3)</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div>
+      <h1>Contoh Error Boundary</h1>
+      <ErrorBoundary>
+        <BuggyComponent />
+      </ErrorBoundary>
+      <p>Ini adalah konten di luar ErrorBoundary.</p>
+    </div>
+  );
+}
+
+export default App;
+```
+
+Dengan menguasai fitur-fitur lanjutan React Router ini, Anda akan dapat membangun aplikasi React yang lebih tangguh, aman, dan memiliki pengalaman pengguna yang lebih baik.

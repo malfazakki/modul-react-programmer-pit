@@ -1,0 +1,335 @@
+# Modul Pembelajaran React.js - Hari ke-14
+
+## Topik Harian: Custom Hooks
+
+Pada hari keempat belas ini, kita akan mempelajari tentang **Custom Hooks**. *Custom Hooks* adalah fitur canggih di React yang memungkinkan Anda untuk menggunakan kembali logika *stateful* antar komponen. Ini adalah cara yang sangat efektif untuk mengorganisir kode, meningkatkan keterbacaan, dan mempromosikan penggunaan kembali dalam aplikasi React Anda.
+
+## Kompetensi:
+
+*   Memahami pengenalan *Custom Hooks*.
+*   Mampu mengekstrak logika komponen ke dalam *Custom Hooks*.
+*   Memahami *Hooks Composition* untuk menggabungkan beberapa *Hooks*.
+*   Memahami *best practices* dalam membuat dan menggunakan *Custom Hooks*.
+*   Mampu mengidentifikasi pola *Custom Hooks* yang umum.
+
+## Materi Pembelajaran:
+
+### 1. Custom Hooks Introduction
+
+*Custom Hooks* adalah fungsi JavaScript yang namanya dimulai dengan `use` (misalnya `useSomething`) dan dapat memanggil *Hooks* standar React lainnya (seperti `useState`, `useEffect`, `useContext`).
+
+**Tujuan Utama Custom Hooks:**
+*   **Reusability (Penggunaan Kembali)**: Memungkinkan Anda untuk menggunakan kembali logika *stateful* (misalnya, logika *fetching* data, *form handling*, *timer*) di berbagai komponen tanpa harus menyalin dan menempel kode.
+*   **Separation of Concerns (Pemisahan Kekhawatiran)**: Memisahkan logika yang kompleks dari komponen UI, membuat komponen lebih bersih dan lebih mudah dibaca.
+*   **Testability (Kemampuan Uji)**: Logika yang terisolasi dalam *Custom Hooks* lebih mudah diuji secara terpisah.
+
+**Aturan Custom Hooks:**
+*   Nama fungsi harus dimulai dengan `use` (misalnya `useFetch`, `useToggle`). Ini adalah konvensi yang memungkinkan React untuk mengidentifikasi bahwa itu adalah *Hook* dan menerapkan aturan *Hooks* (misalnya, hanya memanggil *Hooks* di level atas fungsi komponen atau *Custom Hooks* lainnya).
+*   *Custom Hooks* dapat memanggil *Hooks* standar React lainnya.
+*   *Custom Hooks* dapat menerima argumen dan mengembalikan nilai apa pun.
+
+### 2. Extracting Component Logic
+
+Mari kita lihat contoh bagaimana kita bisa mengekstrak logika dari komponen ke dalam *Custom Hook*.
+
+**Contoh Sebelum Custom Hook (Logika Duplikat):**
+
+Misalkan Anda memiliki dua komponen yang keduanya perlu melacak status *online/offline* pengguna.
+
+```jsx
+import React, { useState, useEffect } from 'react';
+
+function FriendStatus({ friendId }) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    // Simulasi API untuk status online
+    const checkStatus = () => {
+      // Logika kompleks untuk memeriksa status online
+      const status = friendId % 2 === 0 ? true : false; // Contoh sederhana
+      setIsOnline(status);
+    };
+
+    checkStatus(); // Panggil saat mounting
+    const intervalId = setInterval(checkStatus, 5000); // Periksa setiap 5 detik
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [friendId]);
+
+  if (isOnline === null) {
+    return 'Memuat...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+
+function UserStatus() {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    // Logika yang sama persis dengan FriendStatus
+    const checkStatus = () => {
+      const status = Math.random() > 0.5 ? true : false; // Contoh sederhana
+      setIsOnline(status);
+    };
+
+    checkStatus();
+    const intervalId = setInterval(checkStatus, 3000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  if (isOnline === null) {
+    return 'Memuat status Anda...';
+  }
+  return isOnline ? 'Anda Online' : 'Anda Offline';
+}
+
+function App() {
+  return (
+    <div>
+      <h2>Contoh Tanpa Custom Hook (Logika Duplikat)</h2>
+      <p>Status Teman 1: <FriendStatus friendId={1} /></p>
+      <p>Status Teman 2: <FriendStatus friendId={2} /></p>
+      <p>Status Anda: <UserStatus /></p>
+    </div>
+  );
+}
+
+export default App;
+```
+
+**Contoh Setelah Custom Hook (Logika Diekstrak):**
+
+Kita bisa mengekstrak logika `isOnline` ke dalam *Custom Hook* `useFriendStatus`.
+
+```jsx
+import React, { useState, useEffect } from 'react';
+
+// Custom Hook: useFriendStatus
+function useFriendStatus(friendId) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    const checkStatus = () => {
+      // Logika kompleks untuk memeriksa status online
+      // Bisa berupa panggilan API, WebSocket, dll.
+      const status = friendId % 2 === 0 ? true : false; // Contoh sederhana
+      setIsOnline(status);
+    };
+
+    checkStatus();
+    const intervalId = setInterval(checkStatus, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [friendId]); // Dependensi: friendId
+
+  return isOnline; // Mengembalikan nilai state
+}
+
+// Komponen yang menggunakan Custom Hook
+function FriendStatus({ friendId }) {
+  const isOnline = useFriendStatus(friendId); // Menggunakan Custom Hook
+
+  if (isOnline === null) {
+    return 'Memuat...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+
+// Komponen lain yang menggunakan Custom Hook yang sama
+function UserStatus() {
+  // Kita bisa menggunakan useFriendStatus dengan ID dummy atau logika lain
+  // untuk menunjukkan penggunaan kembali logika yang sama
+  const isOnline = useFriendStatus(0); // Contoh: ID 0 untuk pengguna sendiri
+
+  if (isOnline === null) {
+    return 'Memuat status Anda...';
+  }
+  return isOnline ? 'Anda Online' : 'Anda Offline';
+}
+
+function App() {
+  return (
+    <div>
+      <h2>Contoh dengan Custom Hook</h2>
+      <p>Status Teman 1: <FriendStatus friendId={1} /></p>
+      <p>Status Teman 2: <FriendStatus friendId={2} /></p>
+      <p>Status Anda: <UserStatus /></p>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 3. Hooks Composition
+
+*Hooks Composition* adalah kemampuan untuk menggabungkan beberapa *Hooks* (baik standar maupun *Custom Hooks*) di dalam *Custom Hook* lainnya. Ini memungkinkan Anda untuk membangun *Custom Hooks* yang lebih kompleks dari *Custom Hooks* yang lebih sederhana, menciptakan lapisan abstraksi yang kuat.
+
+**Contoh Hooks Composition:**
+
+Misalkan kita ingin membuat *Custom Hook* untuk *fetching* data yang juga menangani *loading state* dan *error handling*.
+
+```jsx
+import React, { useState, useEffect } from 'react';
+
+// Custom Hook untuk fetching data
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]); // Effect dijalankan ulang jika URL berubah
+
+  return { data, loading, error }; // Mengembalikan state
+}
+
+// Komponen yang menggunakan Custom Hook useFetch
+function PostViewer({ postId }) {
+  const { data: post, loading, error } = useFetch(
+    `https://jsonplaceholder.typicode.com/posts/${postId}`
+  );
+
+  if (loading) return <p>Memuat postingan...</p>;
+  if (error) return <p>Terjadi kesalahan: {error.message}</p>;
+  if (!post) return <p>Postingan tidak ditemukan.</p>;
+
+  return (
+    <div>
+      <h3>{post.title}</h3>
+      <p>{post.body}</p>
+    </div>
+  );
+}
+
+function App() {
+  const [currentPostId, setCurrentPostId] = useState(1);
+
+  return (
+    <div>
+      <h2>Contoh Hooks Composition (useFetch)</h2>
+      <PostViewer postId={currentPostId} />
+      <button onClick={() => setCurrentPostId(prevId => prevId + 1)}>
+        Lihat Postingan Berikutnya
+      </button>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 4. Custom Hooks Best Practices
+
+*   **Nama Dimulai dengan `use`**: Selalu ikuti konvensi penamaan `useSomething`.
+*   **Hanya Panggil Hooks di Level Atas**: Jangan memanggil *Hooks* di dalam *loops*, kondisi, atau fungsi bersarang.
+*   **Gunakan untuk Logika, Bukan UI**: *Custom Hooks* harus fokus pada logika *stateful* dan *side effects*, bukan pada *rendering* UI. Mereka mengembalikan data atau fungsi yang dapat digunakan oleh komponen untuk me-*render* UI.
+*   **Parameter dan Nilai Kembali yang Jelas**: Pastikan *Custom Hook* Anda memiliki parameter yang jelas dan mengembalikan nilai yang mudah dipahami.
+*   **Dokumentasi**: Dokumentasikan *Custom Hook* Anda dengan baik, jelaskan apa yang dilakukannya, parameter yang diterimanya, dan nilai yang dikembalikannya.
+*   **Testability**: Desain *Custom Hook* Anda agar mudah diuji secara terpisah dari komponen UI.
+
+### 5. Common Custom Hooks Patterns
+
+Beberapa pola *Custom Hooks* yang umum meliputi:
+
+*   **`useToggle`**: Untuk mengelola *state* boolean sederhana (misalnya, *toggle* visibilitas, *on/off*).
+    ```jsx
+    function useToggle(initialValue = false) {
+      const [value, setValue] = useState(initialValue);
+      const toggle = useCallback(() => {
+        setValue(prev => !prev);
+      }, []);
+      return [value, toggle];
+    }
+    // Penggunaan: const [isOpen, toggleOpen] = useToggle(false);
+    ```
+*   **`useLocalStorage`**: Untuk menyimpan dan mengambil data dari `localStorage`.
+    ```jsx
+    function useLocalStorage(key, initialValue) {
+      const [storedValue, setStoredValue] = useState(() => {
+        try {
+          const item = window.localStorage.getItem(key);
+          return item ? JSON.parse(item) : initialValue;
+        } catch (error) {
+          console.log(error);
+          return initialValue;
+        }
+      });
+
+      const setValue = (value) => {
+        try {
+          setStoredValue(value);
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      return [storedValue, setValue];
+    }
+    // Penggunaan: const [name, setName] = useLocalStorage('userName', 'Guest');
+    ```
+*   **`useDebounce`**: Untuk menunda eksekusi fungsi sampai setelah sejumlah waktu tertentu berlalu tanpa ada *event* lain. Berguna untuk *search input*.
+*   **`useForm`**: Untuk mengelola *state* dan validasi formulir yang kompleks.
+*   **`useMediaQuery`**: Untuk melacak apakah *media query* tertentu cocok.
+
+*Custom Hooks* adalah salah satu fitur paling kuat di React yang memungkinkan Anda menulis kode yang lebih bersih, lebih modular, dan lebih mudah dipelihara. Dengan menguasai *Custom Hooks*, Anda akan dapat membangun aplikasi React yang lebih canggih dan efisien.
+
+---
+
+## Tugas Harian
+
+Berikut adalah tugas yang harus dikerjakan oleh santri pada hari keempat belas:
+
+1. **Membuat Custom Hook Sederhana**
+   - Buatlah custom hook `useToggle` untuk mengelola state boolean (misal: buka/tutup modal, on/off switch).
+   - Gunakan custom hook ini di minimal dua komponen berbeda (misal: tombol show/hide dan switch).
+
+2. **Ekstraksi Logika ke Custom Hook**
+   - Ambil logika fetching data dari sebuah komponen dan ekstrak ke dalam custom hook `useFetch`.
+   - Gunakan custom hook ini untuk mengambil data dari API publik (misal: https://jsonplaceholder.typicode.com/posts/1).
+   - Tampilkan data yang diambil di komponen.
+
+3. **Hooks Composition**
+   - Buatlah dua custom hook sederhana (misal: `useCounter` dan `useToggle`).
+   - Buat custom hook baru yang menggabungkan kedua hook tersebut (misal: `useCounterWithToggle`).
+   - Gunakan custom hook hasil komposisi di sebuah komponen.
+
+4. **Custom Hook untuk Form Handling**
+   - Buat custom hook `useForm` untuk mengelola state dan perubahan input pada form sederhana (misal: nama dan email).
+   - Gunakan custom hook ini di komponen form, dan tampilkan data yang diinput secara real-time.
+
+5. **Custom Hook dengan Local Storage**
+   - Buat custom hook `useLocalStorage` untuk menyimpan dan mengambil data dari localStorage.
+   - Gunakan custom hook ini untuk menyimpan preferensi tema (light/dark) atau nama user.
+   - Pastikan data tetap tersimpan setelah halaman di-refresh.
+
+> **Catatan:**
+> - Tugas dikerjakan secara individu dan dikumpulkan dalam bentuk file markdown atau dokumen digital.
+> - Sertakan hasil kode (screenshot atau link repository) pada setiap tugas yang membutuhkan implementasi React.
+> - Pastikan setiap custom hook memiliki dokumentasi singkat tentang fungsinya.
+> - Demonstrasikan penggunaan kembali custom hook di lebih dari satu komponen jika memungkinkan.

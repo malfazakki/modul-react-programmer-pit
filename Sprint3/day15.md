@@ -1,0 +1,307 @@
+# Modul Pembelajaran React.js - Hari ke-15
+
+## Topik Harian: Performance Optimization
+
+Pada hari kelima belas ini, kita akan membahas tentang **Performance Optimization** di React. Meskipun React sangat efisien, ada kalanya aplikasi Anda mungkin mengalami masalah kinerja, terutama seiring dengan bertambahnya kompleksitas. Memahami cara mengidentifikasi dan mengatasi masalah kinerja adalah keterampilan penting bagi setiap pengembang React.
+
+## Kompetensi:
+
+*   Memahami masalah kinerja umum di React.
+*   Mampu menerapkan teknik optimasi menggunakan `React.memo`, `useMemo`, dan `useCallback`.
+*   Mampu menggunakan *React DevTools profiler* untuk mengidentifikasi *bottleneck* kinerja.
+*   Memahami konsep dasar *Code Splitting*.
+*   Mampu mengimplementasikan *Lazy Loading Components*.
+
+## Materi Pembelajaran:
+
+### 1. Performance Issue in React
+
+Masalah kinerja di React seringkali muncul dari *re-rendering* komponen yang tidak perlu. Ingat, React akan me-*re-render* komponen setiap kali *state* atau *props*-nya berubah. Jika komponen induk di-*re-render*, secara *default* semua komponen anaknya juga akan di-*re-render*, terlepas dari apakah *props* mereka benar-benar berubah atau tidak.
+
+**Penyebab Umum Masalah Kinerja:**
+*   **Re-rendering yang Tidak Perlu**: Komponen di-*render* ulang meskipun *props* atau *state* yang relevan tidak berubah.
+*   **Perhitungan Mahal**: Fungsi atau logika yang memakan banyak waktu dieksekusi ulang pada setiap *render*.
+*   **Ukuran Bundle Besar**: Ukuran *bundle* JavaScript aplikasi yang besar dapat memperlambat waktu *initial load*.
+*   **Manipulasi DOM yang Berlebihan**: Meskipun React mengelola DOM secara efisien, operasi DOM yang sangat sering atau kompleks masih bisa menjadi *bottleneck*.
+
+### 2. React.memo untuk Component Memoization
+
+`React.memo` adalah *Higher-Order Component* (HOC) yang digunakan untuk mengoptimalkan *functional components* dengan melakukan *memoization*. Ini berarti React akan "mengingat" hasil *render* komponen dan akan melewatkan *re-rendering* jika *props* yang diterimanya sama dengan *props* dari *render* sebelumnya.
+
+**Kapan Menggunakan `React.memo`?**
+*   Ketika komponen Anda sering di-*render*.
+*   Ketika komponen Anda menerima *props* yang sama di sebagian besar *render*.
+*   Ketika *rendering* komponen tersebut mahal (membutuhkan banyak perhitungan atau elemen DOM).
+
+**Contoh `React.memo`:**
+
+```jsx
+import React, { useState } from 'react';
+
+// Komponen Anak yang Tidak Dioptimalkan
+function UnoptimizedChild({ count }) {
+  console.log('UnoptimizedChild di-render');
+  return <p>Count (Unoptimized): {count}</p>;
+}
+
+// Komponen Anak yang Dioptimalkan dengan React.memo
+const OptimizedChild = React.memo(function OptimizedChild({ count }) {
+  console.log('OptimizedChild di-render');
+  return <p>Count (Optimized): {count}</p>;
+});
+
+function ParentComponent() {
+  const [parentCount, setParentCount] = useState(0);
+  const [otherState, setOtherState] = useState(0); // State lain yang tidak diteruskan ke anak
+
+  return (
+    <div>
+      <h2>Optimasi dengan React.memo</h2>
+      <p>Parent Count: {parentCount}</p>
+      <p>Other State: {otherState}</p>
+      <button onClick={() => setParentCount(parentCount + 1)}>
+        Tambah Parent Count
+      </button>
+      <button onClick={() => setOtherState(otherState + 1)}>
+        Tambah Other State (akan me-render ulang anak tanpa memo)
+      </button>
+
+      <hr />
+
+      {/* UnoptimizedChild akan selalu di-render ulang saat ParentComponent di-render */}
+      <UnoptimizedChild count={parentCount} />
+
+      {/* OptimizedChild hanya akan di-render ulang jika prop 'count' berubah */}
+      <OptimizedChild count={parentCount} />
+    </div>
+  );
+}
+
+export default ParentComponent;
+```
+**Catatan**: `React.memo` melakukan perbandingan dangkal (*shallow comparison*) pada *props*. Jika *props* adalah objek atau fungsi yang dibuat ulang pada setiap *render* induk, `React.memo` mungkin tidak efektif. Di sinilah `useMemo` dan `useCallback` berperan.
+
+### 3. useMemo dan useCallback Hooks
+
+`useMemo` dan `useCallback` adalah *Hooks* yang digunakan untuk *memoization* nilai dan fungsi, masing-masing. Mereka membantu mencegah *re-rendering* yang tidak perlu dan perhitungan ulang yang mahal.
+
+#### a. useMemo Hook
+
+`useMemo` digunakan untuk *memoize* nilai yang dihitung. Ini akan menghitung ulang nilai hanya jika salah satu dependensinya berubah.
+
+**Kapan Menggunakan `useMemo`?**
+*   Ketika Anda memiliki perhitungan yang mahal yang tidak perlu diulang pada setiap *render*.
+*   Ketika Anda perlu menyediakan objek atau *array* sebagai *prop* ke komponen yang di-*memoize* (`React.memo`) untuk mencegah *re-rendering* yang tidak perlu.
+
+**Contoh `useMemo`:**
+
+```jsx
+import React, { useState, useMemo } from 'react';
+
+function ExpensiveCalculation({ num }) {
+  console.log('Melakukan perhitungan mahal...');
+  // Simulasi perhitungan yang memakan waktu
+  let result = 0;
+  for (let i = 0; i < 100000000; i++) {
+    result += num;
+  }
+  return result;
+}
+
+function ParentWithMemo() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+
+  // Nilai yang di-memoize: hanya akan dihitung ulang jika 'count' berubah
+  const memoizedResult = useMemo(() => {
+    return <ExpensiveCalculation num={count} />;
+  }, [count]); // Dependensi: count
+
+  return (
+    <div>
+      <h2>Optimasi dengan useMemo</h2>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Tambah Count</button>
+      <br />
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Ketik sesuatu..."
+      />
+      <p>Teks: {text}</p>
+
+      <hr />
+      {/* Perhitungan mahal hanya akan dijalankan saat count berubah */}
+      {memoizedResult}
+    </div>
+  );
+}
+
+export default ParentWithMemo;
+```
+
+#### b. useCallback Hook
+
+`useCallback` digunakan untuk *memoize* fungsi. Ini akan mengembalikan versi fungsi yang di-*memoize* hanya jika salah satu dependensinya berubah. Ini sangat berguna ketika Anda meneruskan fungsi sebagai *prop* ke komponen anak yang di-*memoize* (`React.memo`).
+
+**Kapan Menggunakan `useCallback`?**
+*   Ketika Anda meneruskan fungsi *callback* ke komponen anak yang di-*memoize* (`React.memo`) untuk mencegah *re-rendering* yang tidak perlu dari komponen anak tersebut.
+*   Ketika fungsi tersebut digunakan sebagai dependensi di `useEffect` atau `useMemo` lainnya.
+
+**Contoh `useCallback`:**
+
+```jsx
+import React, { useState, useCallback } from 'react';
+
+// Komponen Anak yang di-memoize
+const ChildComponent = React.memo(({ onClick }) => {
+  console.log('ChildComponent di-render');
+  return <button onClick={onClick}>Klik Anak</button>;
+});
+
+function ParentWithCallback() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+
+  // Fungsi ini akan dibuat ulang setiap kali ParentWithCallback di-render
+  // const handleClickWithoutCallback = () => {
+  //   console.log('Tombol anak diklik (tanpa useCallback)');
+  //   setCount(count + 1);
+  // };
+
+  // Fungsi ini akan di-memoize dan hanya dibuat ulang jika 'count' berubah
+  const handleClickWithCallback = useCallback(() => {
+    console.log('Tombol anak diklik (dengan useCallback)');
+    setCount(prevCount => prevCount + 1);
+  }, []); // Dependensi: array kosong, fungsi ini tidak akan dibuat ulang
+
+  return (
+    <div>
+      <h2>Optimasi dengan useCallback</h2>
+      <p>Count: {count}</p>
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Ketik sesuatu..."
+      />
+      <p>Teks: {text}</p>
+
+      <hr />
+      {/* ChildComponent hanya akan di-render ulang jika prop 'onClick' berubah.
+          Dengan useCallback, onClick tidak akan berubah kecuali dependensinya berubah. */}
+      <ChildComponent onClick={handleClickWithCallback} />
+    </div>
+  );
+}
+
+export default ParentWithCallback;
+```
+
+### 4. React DevTools Profiler
+
+*React DevTools* adalah ekstensi *browser* yang sangat berguna untuk *debugging* dan *profiling* aplikasi React Anda. *Profiler* memungkinkan Anda untuk merekam sesi interaksi dengan aplikasi Anda dan melihat berapa lama waktu yang dibutuhkan setiap komponen untuk di-*render*.
+
+**Cara Menggunakan Profiler:**
+1.  Instal ekstensi *React DevTools* untuk *browser* Anda (Chrome/Firefox).
+2.  Buka *Developer Tools* di *browser* Anda (F12).
+3.  Pilih tab "Profiler".
+4.  Klik tombol "Record" (lingkaran merah) untuk memulai perekaman.
+5.  Lakukan interaksi di aplikasi Anda.
+6.  Klik tombol "Stop" untuk menghentikan perekaman.
+7.  Anda akan melihat grafik yang menunjukkan waktu *rendering* komponen. Komponen yang di-*highlight* dengan warna kuning/merah adalah yang memakan waktu *rendering* paling banyak.
+
+*Profiler* membantu Anda mengidentifikasi *bottleneck* kinerja dan komponen mana yang paling sering di-*render* ulang secara tidak perlu.
+
+### 5. Code Splitting Dasar
+
+*Code splitting* adalah teknik untuk memecah *bundle* kode JavaScript Anda menjadi bagian-bagian yang lebih kecil yang dapat dimuat secara *on-demand*. Ini membantu mengurangi ukuran *bundle* awal yang harus diunduh pengguna, sehingga mempercepat waktu *initial load* aplikasi Anda.
+
+**Cara Kerja:**
+*Code splitting* biasanya dilakukan pada level rute atau komponen. Ketika pengguna menavigasi ke rute tertentu atau ketika komponen tertentu dibutuhkan, *chunk* kode yang relevan akan dimuat.
+
+### 6. Lazy Loading Components
+
+*Lazy loading* adalah implementasi dari *code splitting* di mana komponen hanya dimuat saat dibutuhkan. React menyediakan `React.lazy()` dan `Suspense` untuk memfasilitasi *lazy loading*.
+
+*   **`React.lazy()`**: Fungsi ini memungkinkan Anda untuk me-*render* impor dinamis sebagai komponen React biasa.
+*   **`React.Suspense`**: Komponen ini memungkinkan Anda untuk menampilkan *fallback content* (misalnya, indikator *loading*) saat komponen yang di-*lazy-load* sedang dimuat.
+
+**Contoh Lazy Loading Components:**
+
+```jsx
+import React, { useState, Suspense } from 'react';
+
+// Menggunakan React.lazy untuk lazy load komponen
+const LazyLoadedComponent = React.lazy(() => import('./LazyLoadedComponent'));
+
+// LazyLoadedComponent.js (file terpisah)
+// import React from 'react';
+// function LazyLoadedComponent() {
+//   return <div>Ini adalah komponen yang dimuat secara lazy!</div>;
+// }
+// export default LazyLoadedComponent;
+
+
+function App() {
+  const [showLazy, setShowLazy] = useState(false);
+
+  return (
+    <div>
+      <h2>Lazy Loading Components</h2>
+      <button onClick={() => setShowLazy(true)}>
+        Tampilkan Komponen Lazy
+      </button>
+
+      {showLazy && (
+        <Suspense fallback={<div>Memuat komponen...</div>}>
+          {/* Komponen ini hanya akan dimuat saat showLazy true */}
+          <LazyLoadedComponent />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+Dengan menerapkan teknik-teknik optimasi ini, Anda dapat secara signifikan meningkatkan kinerja aplikasi React Anda, memberikan pengalaman pengguna yang lebih cepat dan responsif.
+
+---
+
+## Tugas Harian
+
+Berikut adalah tugas yang harus dikerjakan oleh santri pada hari kelima belas:
+
+1. **Implementasi React.memo**
+   - Buatlah komponen induk dengan state yang sering berubah dan komponen anak yang menerima props.
+   - Implementasikan React.memo pada komponen anak untuk mencegah re-rendering yang tidak perlu.
+   - Demonstrasikan perbedaan performa dengan console.log untuk melihat kapan komponen di-render.
+
+2. **Optimasi dengan useMemo**
+   - Buatlah komponen dengan perhitungan yang mahal (misal: loop besar atau operasi matematika kompleks).
+   - Implementasikan useMemo untuk mengoptimalkan perhitungan tersebut.
+   - Tunjukkan bahwa perhitungan hanya dijalankan ulang ketika dependensi berubah.
+
+3. **Optimasi dengan useCallback**
+   - Buatlah komponen induk yang meneruskan fungsi callback ke komponen anak yang di-memoize.
+   - Implementasikan useCallback untuk mencegah re-rendering komponen anak yang tidak perlu.
+   - Demonstrasikan perbedaan dengan dan tanpa useCallback.
+
+4. **Code Splitting dan Lazy Loading**
+   - Buatlah aplikasi dengan minimal 3 halaman/komponen yang berbeda.
+   - Implementasikan React.lazy() dan Suspense untuk lazy loading komponen.
+   - Tambahkan tombol navigasi untuk memuat komponen secara on-demand.
+
+5. **Performance Profiling**
+   - Buatlah aplikasi sederhana dengan beberapa komponen yang memiliki performa berbeda.
+   - Gunakan React DevTools Profiler untuk mengidentifikasi bottleneck performa.
+   - Dokumentasikan hasil profiling dan jelaskan optimasi yang dapat diterapkan.
+
+> **Catatan:**
+> - Tugas dikerjakan secara individu dan dikumpulkan dalam bentuk file markdown atau dokumen digital.
+> - Sertakan hasil kode (screenshot atau link repository) pada setiap tugas yang membutuhkan implementasi React.
+> - Untuk tugas profiling, sertakan screenshot dari React DevTools Profiler.
+> - Pastikan setiap optimasi yang diterapkan memiliki penjelasan mengapa optimasi tersebut diperlukan.
