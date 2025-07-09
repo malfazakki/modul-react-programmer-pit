@@ -1,0 +1,488 @@
+# Modul Pembelajaran React.js - Hari ke-19
+
+## Topik Harian: Advanced Styling dan UI Libraries
+
+Pada hari kesembilan belas ini, kita akan mendalami teknik *styling* yang lebih canggih di React dan bagaimana memanfaatkan *UI Libraries* untuk mempercepat pengembangan. Membangun antarmuka pengguna yang menarik dan konsisten adalah bagian penting dari pengembangan *frontend*, dan materi ini akan membekali Anda dengan alat dan konsep untuk mencapainya.
+
+## Kompetensi:
+
+*   Mampu menerapkan teknik *advanced styling*.
+*   Mampu menggunakan *UI Libraries* seperti Material UI atau Ant Design.
+*   Memahami konsep *Theming* dan *Design Systems*.
+
+## Materi Pembelajaran:
+
+### 1. Advanced Styled-Components
+
+Pada Hari ke-4, kita sudah mengenal dasar-dasar *Styled Components*. Sekarang, mari kita jelajahi beberapa fitur yang lebih canggih yang akan membantu Anda menulis *style* yang lebih dinamis dan terstruktur.
+
+#### a. Props dalam Styled Components
+
+Anda dapat menggunakan *props* yang diteruskan ke komponen React Anda untuk mengubah *style* secara dinamis. Ini memungkinkan Anda membuat komponen yang sangat fleksibel yang *style*-nya beradaptasi berdasarkan data atau kondisi.
+
+```jsx
+import React from 'react';
+import styled from 'styled-components';
+
+// Komponen Button yang style-nya berubah berdasarkan prop `$primary`
+const Button = styled.button`
+  background-color: ${props => props.$primary ? '#007bff' : '#6c757d'};
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${props => props.$primary ? '#0056b3' : '#5a6268'};
+  }
+`;
+
+function App() {
+  return (
+    <div>
+      <h2>Advanced Styled-Components: Props</h2>
+      <Button $primary>Tombol Utama</Button> {/* Meneruskan prop $primary */}
+      <Button>Tombol Sekunder</Button>      {/* Tidak ada prop $primary */}
+    </div>
+  );
+}
+
+export default App;
+```
+**Catatan Penting**: Penggunaan `$primary` (dengan tanda dolar di depannya) adalah fitur *Styled Components* v5 ke atas. Ini menandakan bahwa *prop* ini adalah *transient prop* dan tidak boleh diteruskan ke elemen DOM yang mendasarinya (misalnya, tidak akan muncul sebagai atribut HTML di `<button>`). Ini membantu menghindari peringatan *unknown prop* di konsol *browser*.
+
+#### b. Extending Styles
+
+*Styled Components* memungkinkan Anda untuk membuat *styled component* baru yang mewarisi semua *style* dari *styled component* yang sudah ada, dan kemudian menambahkan atau menimpa *style* tambahan. Ini mempromosikan penggunaan kembali *style* dasar.
+
+```jsx
+import React from 'react';
+import styled from 'styled-components';
+
+// Komponen Button dasar
+const Button = styled.button`
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px;
+`;
+
+// Komponen PrimaryButton yang mewarisi style dari Button dan mengubah background-color
+const PrimaryButton = styled(Button)`
+  background-color: #28a745; /* Mengubah warna latar belakang */
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+// Komponen DangerButton yang mewarisi style dari Button dan mengubah background-color
+const DangerButton = styled(Button)`
+  background-color: #dc3545; /* Mengubah warna latar belakang */
+  &:hover {
+    background-color: #c82333;
+  }
+`;
+
+function App() {
+  return (
+    <div>
+      <h2>Advanced Styled-Components: Extending Styles</h2>
+      <Button>Default Button</Button>
+      <PrimaryButton>Primary Button</PrimaryButton>
+      <DangerButton>Danger Button</DangerButton>
+    </div>
+  );
+}
+
+export default App;
+```
+
+#### c. Theming dengan Styled Components
+
+*Styled Components* memiliki fitur *theming* bawaan yang kuat menggunakan komponen `ThemeProvider` dan `useTheme` Hook (dari *library* `styled-components`). Ini memungkinkan Anda untuk mendefinisikan tema (misalnya, palet warna, tipografi, spasi) dan menyediakannya ke seluruh pohon komponen, sehingga Anda dapat dengan mudah mengubah tampilan aplikasi secara global.
+
+```jsx
+import React, { useState } from 'react';
+import styled, { ThemeProvider, useTheme } from 'styled-components';
+
+// 1. Definisikan objek tema
+const lightTheme = {
+  colors: {
+    primary: '#007bff',
+    secondary: '#6c757d',
+    background: '#f8f9fa',
+    text: '#212529',
+  },
+  fonts: {
+    main: 'Arial, sans-serif',
+    heading: 'Georgia, serif',
+  },
+  spacing: {
+    small: '8px',
+    medium: '16px',
+  }
+};
+
+const darkTheme = {
+  colors: {
+    primary: '#6610f2',
+    secondary: '#6c757d',
+    background: '#343a40',
+    text: '#f8f9fa',
+  },
+  fonts: {
+    main: 'Verdana, sans-serif',
+    heading: 'Times New Roman, serif',
+  },
+  spacing: {
+    small: '10px',
+    medium: '20px',
+  }
+};
+
+// 2. Gunakan properti tema di styled components
+const Container = styled.div`
+  background-color: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.text};
+  font-family: ${props => props.theme.fonts.main};
+  padding: ${props => props.theme.spacing.medium};
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  text-align: center;
+`;
+
+const ThemedButton = styled.button`
+  background-color: ${props => props.theme.colors.primary};
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: ${props => props.theme.spacing.small};
+`;
+
+// Komponen yang menggunakan useTheme Hook untuk mengakses tema
+function ThemeSwitcher() {
+  const theme = useTheme(); // Mengakses objek tema saat ini
+  const [isLight, setIsLight] = useState(true);
+
+  const toggleTheme = () => {
+    setIsLight(prev => !prev);
+    // Logika untuk mengganti tema di App component (misalnya melalui prop atau context lain)
+    // Dalam contoh ini, kita hanya menampilkan info tema
+    alert(`Tema saat ini: ${isLight ? 'Light' : 'Dark'}`);
+  };
+
+  return (
+    <ThemedButton onClick={toggleTheme}>
+      Ganti Tema ({isLight ? 'Light' : 'Dark'})
+    </ThemedButton>
+  );
+}
+
+function App() {
+  const [currentTheme, setCurrentTheme] = useState(lightTheme);
+  const [themeName, setThemeName] = useState('light');
+
+  const toggleAppTheme = () => {
+    setCurrentTheme(prev => (prev === lightTheme ? darkTheme : lightTheme));
+    setThemeName(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  return (
+    // 3. Bungkus aplikasi dengan ThemeProvider dan berikan objek tema
+    <ThemeProvider theme={currentTheme}>
+      <Container>
+        <h2>Advanced Styled-Components: Theming</h2>
+        <p>Aplikasi ini menggunakan tema <span style={{ fontWeight: 'bold' }}>{themeName}</span>.</p>
+        <ThemedButton onClick={toggleAppTheme}>Ganti Tema Aplikasi</ThemedButton>
+        <ThemeSwitcher /> {/* Komponen ini akan otomatis mendapatkan tema dari Provider */}
+      </Container>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+```
+
+### 2. Tailwind CSS dengan React
+
+Tailwind CSS adalah *framework* CSS *utility-first* yang memungkinkan Anda membangun desain kustom dengan cepat langsung di *markup* Anda dengan menggunakan kelas-kelas *utility* yang sudah ditentukan. Ini berbeda dari *framework* UI tradisional karena tidak menyediakan komponen yang sudah jadi, melainkan kelas *utility* yang dapat Anda gabungkan untuk membuat *style* apa pun.
+
+**Instalasi dan Setup Tailwind CSS (untuk proyek React):**
+
+1.  **Buat Proyek React Baru (jika belum):**
+    ```bash
+    npx create-react-app my-tailwind-app
+    cd my-tailwind-app
+    ```
+    atau
+    ```bash
+    npm create vite@latest my-tailwind-app -- --template react
+    cd my-tailwind-app
+    npm install
+    ```
+
+2.  **Instal Tailwind CSS dan Dependensi:**
+    ```bash
+    npm install -D tailwindcss postcss autoprefixer
+    ```
+
+3.  **Inisialisasi Tailwind CSS:**
+    ```bash
+    npx tailwindcss init -p
+    ```
+    Ini akan membuat dua file di *root* proyek Anda: `tailwind.config.js` dan `postcss.config.js`.
+
+4.  **Konfigurasi `tailwind.config.js`:**
+    Edit file `tailwind.config.js` untuk mengkonfigurasi jalur file yang akan dipindai Tailwind untuk kelas CSS-nya.
+    ```javascript
+    /** @type {import('tailwindcss').Config} */
+    module.exports = {
+      content: [
+        "./src/**/*.{js,jsx,ts,tsx}", // Pindai semua file JS, JSX, TS, TSX di folder src
+      ],
+      theme: {
+        extend: {},
+      },
+      plugins: [],
+    }
+    ```
+
+5.  **Tambahkan Direktif Tailwind ke CSS Anda:**
+    Buka file CSS utama Anda (biasanya `src/index.css` atau `src/App.css`) dan tambahkan direktif Tailwind di bagian atas:
+    ```css
+    /* src/index.css */
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+    ```
+
+6.  **Pastikan CSS Utama Diimpor:**
+    Pastikan file CSS utama Anda diimpor di `src/index.js` atau `src/main.jsx` (untuk Vite).
+    ```javascript
+    // src/index.js
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import './index.css'; // Pastikan ini ada
+    import App from './App';
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    ```
+
+**Contoh Penggunaan Tailwind CSS di Komponen React:**
+
+```jsx
+import React from 'react';
+// Tidak perlu mengimpor file CSS di sini jika sudah diimpor di index.js
+
+function TailwindExample() {
+  return (
+    <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
+      <div className="shrink-0">
+        {/* Contoh ikon atau gambar SVG */}
+        <svg className="h-12 w-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-11a1 1 0 102 0V7a1 1 0 10-2 0v1zm0 4a1 1 0 102 0v-1a1 1 0 10-2 0v1z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div>
+        <div className="text-xl font-medium text-black">Halo Tailwind!</div>
+        <p className="text-gray-500">Ini adalah contoh penggunaan Tailwind CSS di React.</p>
+        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+          Pelajari Lebih Lanjut
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default TailwindExample;
+```
+
+**Kelebihan Tailwind CSS:**
+*   **Sangat Fleksibel**: Anda memiliki kontrol penuh atas desain karena Anda membangunnya dari blok bangunan kecil.
+*   **Cepat untuk Prototyping**: Membangun UI dengan cepat tanpa perlu beralih antara file HTML dan CSS.
+*   **Ukuran File Kecil**: Dengan PurgeCSS (yang terintegrasi), hanya CSS yang benar-benar Anda gunakan yang akan disertakan dalam *bundle* akhir, menghasilkan ukuran file yang sangat kecil.
+*   **Tidak Ada Konflik Nama Kelas**: Karena kelas *utility* sangat spesifik dan tidak ada nama kelas kustom yang Anda buat yang berpotensi konflik.
+*   **Konsistensi**: Mendorong konsistensi desain dengan menggunakan sistem nilai yang sudah ditentukan (misalnya, `p-4`, `text-xl`).
+
+**Kekurangan Tailwind CSS:**
+*   *Markup* bisa menjadi sangat panjang dan "berantakan" dengan banyak kelas, terutama untuk komponen yang kompleks.
+*   Kurva pembelajaran awal untuk mengingat semua kelas *utility* dan cara menggabungkannya.
+*   Tidak menyediakan komponen UI yang sudah jadi, Anda harus membangunnya sendiri dari awal.
+
+### 3. UI Libraries (Material UI / Ant Design)
+
+*UI Libraries* menyediakan koleksi komponen UI yang sudah jadi, *pre-styled*, dan dapat diakses. Menggunakan *UI Libraries* dapat sangat mempercepat proses pengembangan, terutama untuk aplikasi yang membutuhkan tampilan yang konsisten dan profesional.
+
+#### a. Material UI (MUI)
+
+Material UI adalah *library* komponen React yang mengimplementasikan Google's Material Design. Ini adalah salah satu *library* UI paling populer dan komprehensif untuk React.
+
+**Instalasi Material UI:**
+```bash
+npm install @mui/material @emotion/react @emotion/styled
+# atau
+yarn add @mui/material @emotion/react @emotion/styled
+```
+
+**Contoh Penggunaan Material UI:**
+
+```jsx
+import React from 'react';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu'; // Contoh ikon
+
+function MaterialUIExample() {
+  return (
+    <Container maxWidth="md">
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Aplikasi MUI
+          </Typography>
+          <Button color="inherit">Login</Button>
+        </Toolbar>
+      </AppBar>
+
+      <Box sx={{ my: 4, textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Selamat Datang di Material UI
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Ini adalah contoh penggunaan komponen Material UI di aplikasi React Anda.
+          Komponen-komponen ini sudah di-style dan siap digunakan.
+        </Typography>
+        <Button variant="contained" color="primary" sx={{ mr: 2 }}>
+          Tombol Utama
+        </Button>
+        <Button variant="outlined" color="secondary">
+          Tombol Sekunder
+        </Button>
+      </Box>
+    </Container>
+  );
+}
+
+export default MaterialUIExample;
+```
+
+#### b. Ant Design
+
+Ant Design adalah *library* UI React yang berasal dari Ant Group (Alibaba). Ini menawarkan set komponen berkualitas tinggi yang mengikuti spesifikasi desain Ant Design, yang dikenal dengan estetika yang bersih dan profesional.
+
+**Instalasi Ant Design:**
+```bash
+npm install antd
+# atau
+yarn add antd
+```
+Anda juga perlu mengimpor CSS Ant Design di file utama Anda (misalnya `src/index.js`):
+`import 'antd/dist/reset.css';` (untuk Ant Design v5+)
+
+**Contoh Penggunaan Ant Design:**
+
+```jsx
+import React from 'react';
+import { Button, Space, Typography, Layout, Menu } from 'antd';
+import { HomeOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons'; // Contoh ikon
+
+const { Header, Content, Footer } = Layout;
+const { Title, Paragraph } = Typography;
+
+function AntDesignExample() {
+  return (
+    <Layout className="layout">
+      <Header>
+        <div className="logo" />
+        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
+          <Menu.Item key="1" icon={<HomeOutlined />}>Beranda</Menu.Item>
+          <Menu.Item key="2" icon={<UserOutlined />}>Profil</Menu.Item>
+          <Menu.Item key="3" icon={<SettingOutlined />}>Pengaturan</Menu.Item>
+        </Menu>
+      </Header>
+      <Content style={{ padding: '0 50px' }}>
+        <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, margin: '16px 0' }}>
+          <Title level={2}>Selamat Datang di Ant Design</Title>
+          <Paragraph>
+            Ini adalah contoh penggunaan komponen Ant Design di aplikasi React Anda.
+            Ant Design menyediakan komponen UI yang kaya dan berkualitas tinggi.
+          </Paragraph>
+          <Space>
+            <Button type="primary">Tombol Utama</Button>
+            <Button>Tombol Default</Button>
+            <Button type="dashed">Tombol Dashed</Button>
+          </Space>
+        </div>
+      </Content>
+      <Footer style={{ textAlign: 'center' }}>Ant Design ©2023 Dibuat oleh Ant UED</Footer>
+    </Layout>
+  );
+}
+
+export default AntDesignExample;
+```
+
+**Kelebihan UI Libraries:**
+*   **Kecepatan Pengembangan**: Sangat cepat untuk membangun UI karena komponen sudah jadi.
+*   **Konsistensi Desain**: Memastikan konsistensi visual di seluruh aplikasi.
+*   **Aksesibilitas**: Banyak *UI Libraries* dibangun dengan mempertimbangkan aksesibilitas.
+*   **Fitur Kaya**: Menyediakan banyak fitur dan opsi kustomisasi.
+
+**Kekurangan UI Libraries:**
+*   **Ukuran Bundle**: Dapat meningkatkan ukuran *bundle* aplikasi karena mengimpor banyak kode.
+*   **Kustomisasi**: Terkadang sulit untuk menyesuaikan komponen di luar opsi yang disediakan oleh *library*.
+*   **Ketergantungan**: Anda terikat pada filosofi desain dan API *library* tersebut.
+
+### 4. Theme Management dan Design Systems
+
+#### a. Theme Management
+
+*Theme management* adalah proses mengelola dan menerapkan tema visual (misalnya, palet warna, tipografi, spasi, bentuk sudut) di seluruh aplikasi Anda. Ini memungkinkan Anda untuk dengan mudah mengubah tampilan dan nuansa aplikasi secara global tanpa harus memodifikasi setiap komponen secara individual.
+
+**Pendekatan Umum untuk Theme Management:**
+*   **Context API**: Seperti yang ditunjukkan pada contoh *Styled Components*, Context API adalah cara yang efektif untuk menyediakan objek tema ke seluruh pohon komponen.
+*   **CSS Variables (Custom Properties)**: Anda dapat mendefinisikan variabel CSS di `:root` atau di elemen induk, dan kemudian menggunakannya di seluruh CSS Anda. Ini memungkinkan perubahan tema dengan mengubah nilai variabel CSS secara dinamis melalui JavaScript.
+*   **Library Theming**: Banyak *UI libraries* (seperti Material UI, Ant Design) memiliki sistem *theming* bawaan yang kuat yang memungkinkan Anda untuk mengkonfigurasi tema secara terpusat.
+
+#### b. Design Systems
+
+*Design System* adalah kumpulan prinsip, pedoman, dan komponen yang dapat digunakan kembali yang membantu tim membangun produk digital yang konsisten dan *scalable*. Ini lebih dari sekadar *style guide* atau *UI library*; ini adalah "sumber kebenaran" tunggal yang mencakup segala sesuatu mulai dari *branding*, *visual design*, *UX patterns*, hingga implementasi kode komponen.
+
+**Manfaat Utama Design System:**
+*   **Konsistensi**: Memastikan pengalaman pengguna yang seragam dan merek yang kohesif di seluruh produk.
+*   **Efisiensi**: Mempercepat proses desain dan pengembangan dengan menyediakan komponen dan pola yang sudah jadi dan dapat digunakan kembali.
+*   **Kualitas**: Meningkatkan kualitas UI/UX dengan menerapkan praktik terbaik dan standar yang konsisten.
+*   **Kolaborasi**: Memfasilitasi kolaborasi yang lebih baik antara desainer, pengembang, dan pemangku kepentingan lainnya.
+*   **Skalabilitas**: Memungkinkan produk untuk tumbuh dan berkembang tanpa mengorbankan konsistensi atau kualitas.
+
+**Contoh Elemen dalam Design System:**
+*   **Desain Token**: Variabel untuk warna, tipografi, spasi, *shadows*, dll.
+*   **Komponen UI**: Tombol, input, kartu, modal, navigasi, dll.
+*   **Pola Desain**: Cara komponen berinteraksi dan diatur.
+*   **Pedoman Konten**: Aturan untuk *tone of voice*, terminologi.
+*   **Aksesibilitas**: Pedoman untuk memastikan produk dapat digunakan oleh semua orang.
+
+Membangun atau mengadopsi *Design System* adalah investasi yang signifikan tetapi sangat berharga untuk proyek-proyek besar dan tim yang berkembang yang bertujuan untuk membangun produk yang kohesif dan *scalable*.
+
+Dengan menguasai teknik *styling* lanjutan dan memahami peran *UI Libraries* serta *Design Systems*, Anda akan dapat membangun antarmuka pengguna yang tidak hanya fungsional tetapi juga estetis, konsisten, dan mudah dipelihara.

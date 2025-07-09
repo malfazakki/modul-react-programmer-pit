@@ -1,0 +1,268 @@
+ # Modul Pembelajaran React.js - Hari ke-23
+
+## Topik Harian: Build Tools dan Deployment
+
+Pada hari kedua puluh tiga ini, kita akan membahas tentang **Build Tools dan Deployment** aplikasi React. Setelah mengembangkan aplikasi, langkah selanjutnya adalah mempersiapkannya untuk produksi dan menyebarkannya agar dapat diakses oleh pengguna. Kita akan menjelajahi bagaimana *build tools* bekerja, mengoptimalkan *build* produksi, dan proses *deployment* ke *platform* seperti Netlify atau Vercel.
+
+## Kompetensi:
+
+*   Memahami proses *build* dan *bundling* aplikasi React.
+*   Mampu mengoptimalkan *build* produksi.
+*   Mampu menggunakan *environment variables*.
+*   Mampu menerapkan *code splitting* dan *lazy loading*.
+*   Mampu menganalisis ukuran *bundle* aplikasi.
+*   Mampu melakukan *deployment* aplikasi React ke Netlify atau Vercel.
+
+## Materi Pembelajaran:
+
+### 1. Webpack dan Vite Configuration
+
+React tidak memiliki *build tool* bawaan. Sebagian besar proyek React modern menggunakan *build tool* seperti Webpack atau Vite untuk mengkompilasi kode sumber (JSX, ES6+, CSS, dll.) menjadi aset yang dapat dipahami oleh *browser*.
+
+#### a. Webpack
+
+Webpack adalah *module bundler* yang sangat kuat dan dapat dikonfigurasi. Ini mengambil modul dengan dependensi dan menghasilkan aset statis yang mewakili modul-modul tersebut.
+
+*   **Fungsi Utama Webpack**:
+    *   **Bundling**: Menggabungkan banyak file JavaScript, CSS, dan aset lainnya menjadi satu atau beberapa *bundle* yang dioptimalkan.
+    *   **Transpiling**: Mengubah kode modern (misalnya ES6+, JSX) menjadi kode yang kompatibel dengan *browser* lama menggunakan *loaders* (misalnya Babel-loader).
+    *   **Asset Management**: Mengelola aset seperti gambar, *font*, dan CSS.
+    *   **Optimization**: Melakukan berbagai optimasi seperti *minification*, *tree shaking*, dan *code splitting*.
+
+*   **Konfigurasi Webpack (`webpack.config.js`)**:
+    Meskipun Create React App menyembunyikan konfigurasi Webpack, memahami dasarnya penting. File konfigurasi Webpack adalah file JavaScript yang mengekspor objek.
+
+    ```javascript
+    // Contoh sederhana webpack.config.js
+    const path = require('path');
+    const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+    module.exports = {
+      mode: 'development', // atau 'production'
+      entry: './src/index.js', // Titik masuk aplikasi Anda
+      output: {
+        filename: 'bundle.js', // Nama file output
+        path: path.resolve(__dirname, 'dist'), // Direktori output
+        clean: true, // Membersihkan direktori dist sebelum build
+      },
+      module: {
+        rules: [
+          {
+            test: /\.(js|jsx)$/, // Aturan untuk file JS/JSX
+            exclude: /node_modules/,
+            use: {
+              loader: 'babel-loader', // Menggunakan Babel untuk transpiling
+              options: {
+                presets: ['@babel/preset-env', '@babel/preset-react'],
+              },
+            },
+          },
+          {
+            test: /\.css$/, // Aturan untuk file CSS
+            use: ['style-loader', 'css-loader'], // Menggunakan style-loader dan css-loader
+          },
+        ],
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          template: './public/index.html', // Menggunakan template HTML
+        }),
+      ],
+      devServer: {
+        static: './dist',
+        port: 3000,
+        open: true,
+        historyApiFallback: true, // Penting untuk React Router
+      },
+      resolve: {
+        extensions: ['.js', '.jsx'], // Memungkinkan import tanpa ekstensi
+      },
+    };
+    ```
+
+#### b. Vite
+
+Vite adalah *build tool* generasi berikutnya yang menawarkan pengalaman pengembangan *frontend* yang jauh lebih cepat. Ini menggunakan *native ES modules* di *browser* selama pengembangan, yang menghilangkan kebutuhan untuk *bundling* yang berat sebelum *server* dapat menyajikan kode Anda.
+
+*   **Kelebihan Vite**:
+    *   **Startup Server Cepat**: Hampir instan karena tidak ada *bundling* awal.
+    *   **Hot Module Replacement (HMR) Cepat**: Perubahan kode langsung tercermin di *browser*.
+    *   **Optimasi Build Produksi**: Menggunakan Rollup di bawah kap mesin untuk *build* produksi yang dioptimalkan.
+    *   **Konfigurasi Minimal**: Seringkali tidak memerlukan konfigurasi sama sekali untuk proyek dasar.
+
+*   **Konfigurasi Vite (`vite.config.js`)**:
+    Konfigurasi Vite jauh lebih sederhana daripada Webpack.
+
+    ```javascript
+    // vite.config.js
+    import { defineConfig } from 'vite';
+    import react from '@vitejs/plugin-react';
+
+    export default defineConfig({
+      plugins: [react()], // Menggunakan plugin React
+      build: {
+        outDir: 'build', // Direktori output untuk build produksi
+      },
+      server: {
+        port: 3000,
+      },
+    });
+    ```
+
+### 2. Environment Variables
+
+*Environment variables* memungkinkan Anda untuk mengkonfigurasi aplikasi Anda secara berbeda untuk lingkungan yang berbeda (misalnya, pengembangan, *staging*, produksi) tanpa mengubah kode sumber. Ini sangat penting untuk menyimpan kunci API, URL *backend*, atau konfigurasi lain yang sensitif atau bervariasi.
+
+*   **Di Create React App (CRA)**:
+    *   Variabel harus diawali dengan `REACT_APP_`.
+    *   Contoh: `REACT_APP_API_URL=https://api.example.com`
+    *   Anda dapat membuat file `.env`, `.env.development`, `.env.production`.
+    *   Akses di kode: `process.env.REACT_APP_API_URL`
+
+*   **Di Vite**:
+    *   Variabel harus diawali dengan `VITE_`.
+    *   Contoh: `VITE_API_URL=https://api.example.com`
+    *   Anda dapat membuat file `.env`, `.env.development`, `.env.production`.
+    *   Akses di kode: `import.meta.env.VITE_API_URL`
+
+**Contoh Penggunaan:**
+
+```javascript
+// .env.development
+VITE_API_URL=http://localhost:5000/api
+
+// .env.production
+VITE_API_URL=https://api.myapp.com/api
+
+// src/App.js
+import React, { useEffect, useState } from 'react';
+
+function App() {
+  const [data, setData] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_URL; // Untuk Vite
+
+  useEffect(() => {
+    fetch(`${apiUrl}/data`)
+      .then(res => res.json())
+      .then(setData)
+      .catch(console.error);
+  }, [apiUrl]);
+
+  return (
+    <div>
+      <h1>Aplikasi React</h1>
+      <p>API URL: {apiUrl}</p>
+      {data ? <pre>{JSON.stringify(data, null, 2)}</pre> : <p>Memuat data...</p>}
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 3. Code Splitting dan Lazy Loading
+
+*Code splitting* adalah teknik optimasi yang membagi *bundle* kode Anda menjadi beberapa bagian yang lebih kecil. Ini memungkinkan *browser* untuk memuat hanya kode yang diperlukan untuk tampilan awal, dan memuat bagian lain secara *lazy* (sesuai permintaan) saat dibutuhkan. Ini sangat meningkatkan waktu *loading* awal aplikasi Anda.
+
+*   **`React.lazy()`**: Memungkinkan Anda me-*render* *dynamic import* sebagai komponen React biasa.
+*   **`Suspense`**: Komponen React yang memungkinkan Anda menampilkan *fallback* (misalnya, *loading indicator*) saat komponen *lazy* sedang dimuat.
+
+```jsx
+import React, { Suspense, useState } from 'react';
+
+// Komponen yang akan di-lazy load
+const LazyComponent = React.lazy(() => import('./LazyComponent'));
+
+function App() {
+  const [showLazy, setShowLazy] = useState(false);
+
+  return (
+    <div>
+      <h1>Code Splitting dan Lazy Loading</h1>
+      <button onClick={() => setShowLazy(true)}>Muat Komponen Lazy</button>
+
+      {showLazy && (
+        <Suspense fallback={<div>Memuat komponen...</div>}>
+          <LazyComponent />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+// src/LazyComponent.js
+import React from 'react';
+
+function LazyComponent() {
+  return (
+    <div style={{ border: '1px dashed green', padding: '20px', margin: '20px' }}>
+      <h3>Saya adalah Komponen yang Dimuat Secara Lazy!</h3>
+      <p>Saya hanya dimuat ketika Anda mengklik tombol.</p>
+    </div>
+  );
+}
+
+export default LazyComponent;
+```
+
+### 4. Bundle Analysis
+
+*Bundle analysis* adalah proses memeriksa ukuran dan komposisi *bundle* JavaScript yang dihasilkan oleh *build tool* Anda. Ini membantu Anda mengidentifikasi *library* besar atau kode yang tidak perlu yang mungkin memperlambat waktu *loading* aplikasi Anda.
+
+*   **Webpack Bundle Analyzer**: *Plugin* Webpack yang menghasilkan visualisasi interaktif dari isi *bundle* Anda.
+    *   Instalasi: `npm install --save-dev webpack-bundle-analyzer`
+    *   Tambahkan ke `webpack.config.js`:
+        ```javascript
+        const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+        // ... di dalam plugins array
+        new BundleAnalyzerPlugin(),
+        ```
+    *   Jalankan *build* produksi Anda, dan laporan akan terbuka di *browser*.
+
+*   **Vite Visualizer**: *Plugin* serupa untuk Vite.
+    *   Instalasi: `npm install --save-dev rollup-plugin-visualizer`
+    *   Tambahkan ke `vite.config.js`:
+        ```javascript
+        import { visualizer } from 'rollup-plugin-visualizer';
+
+        export default defineConfig({
+          plugins: [
+            react(),
+            visualizer({ open: true }), // Buka laporan secara otomatis
+          ],
+        });
+        ```
+
+### 5. Deployment ke Netlify/Vercel
+
+Netlify dan Vercel adalah *platform* *hosting* yang populer untuk aplikasi *frontend* modern, termasuk aplikasi React. Mereka menawarkan *deployment* yang sangat mudah, integrasi CI/CD (Continuous Integration/Continuous Deployment) otomatis, dan fitur-fitur seperti CDN, SSL, dan *serverless functions*.
+
+#### a. Deployment ke Netlify
+
+1.  **Buat Akun Netlify**: Daftar di [netlify.com](https://www.netlify.com/).
+2.  **Hubungkan Repositori Git**: Netlify terintegrasi dengan GitHub, GitLab, dan Bitbucket.
+3.  **Konfigurasi Proyek**:
+    *   **Build Command**: `npm run build` (untuk CRA) atau `npm run build` (untuk Vite).
+    *   **Publish Directory**: `build` (untuk CRA) atau `dist` (untuk Vite).
+4.  **Deploy**: Netlify akan secara otomatis mendeteksi perubahan di repositori Anda dan melakukan *deployment* ulang.
+
+#### b. Deployment ke Vercel
+
+1.  **Buat Akun Vercel**: Daftar di [vercel.com](https://vercel.com/).
+2.  **Hubungkan Repositori Git**: Vercel terintegrasi dengan GitHub, GitLab, dan Bitbucket.
+3.  **Konfigurasi Proyek**: Vercel seringkali dapat mendeteksi *framework* Anda secara otomatis.
+    *   **Build Command**: `npm run build` (untuk CRA) atau `npm run build` (untuk Vite).
+    *   **Output Directory**: `build` (untuk CRA) atau `dist` (untuk Vite).
+4.  **Deploy**: Vercel akan secara otomatis mendeteksi perubahan di repositori Anda dan melakukan *deployment* ulang.
+
+**Manfaat Menggunakan Netlify/Vercel:**
+*   **Deployment Otomatis**: Setiap *push* ke cabang utama akan memicu *deployment* baru.
+*   **Preview Deployments**: Setiap *pull request* akan mendapatkan URL *preview* sendiri.
+*   **CDN Global**: Aplikasi Anda akan disajikan dari *server* terdekat ke pengguna.
+*   **SSL Otomatis**: Sertifikat SSL gratis.
+*   **Serverless Functions**: Kemampuan untuk menambahkan *backend* tanpa *server*.
+
+Dengan memahami *build tools* dan proses *deployment*, Anda akan dapat membawa aplikasi React Anda dari tahap pengembangan ke tangan pengguna dengan efisien dan profesional.
